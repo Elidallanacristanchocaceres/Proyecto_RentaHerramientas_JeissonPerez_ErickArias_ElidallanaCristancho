@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ConstructRent - Iniciar Sesión</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #ffffff;
+      --secondary: #2e4057;
+      --accent: #f7c59f;
+      --light: #efefef;
+      --dark: #1d1d1d;
+      --success: #4caf50;
+      --warning: #ff9800;
+      --danger: #f44336;
+      --gray: #757575;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #f5f5f5;
+      color: var(--dark);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .login-container {
+      display: flex;
+      flex: 1;
+      height: 100vh;
+    }
+
+    .login-image {
+      flex: 1;
+      background-image: url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80');
+      background-size: cover;
+      background-position: center;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-image::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(46, 64, 87, 0.7);
+    }
+
+    .brand-container {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      color: white;
+      padding: 2rem;
+    }
+
+    .brand-logo {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      color: var(--accent);
+    }
+
+    .brand-name {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+
+    .brand-slogan {
+      font-size: 1.2rem;
+      opacity: 0.9;
+    }
+
+    .login-form-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 2rem;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .login-title {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .login-subtitle {
+      color: var(--gray);
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .form-label {
+      font-weight: 500;
+      color: var(--secondary);
+    }
+
+    .form-control {
+      padding: 0.75rem 1rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--secondary);
+    }
+
+    .input-group {
+      position: relative;
+    }
+
+    .input-group .form-control {
+      padding-right: 2.5rem;
+      width: 100%;
+    }
+
+    .input-icon {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray);
+      cursor: pointer;
+    }
+
+    .remember-forgot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .forgot-password {
+      color: var(--secondary);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .forgot-password:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    .btn {
+      padding: 0.75rem 1rem;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 1rem;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background-color: var(--secondary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: #253546;
+    }
+
+    .btn-google {
+      background-color: white;
+      color: #4285F4;
+      border: 1px solid #ddd;
+    }
+
+    .btn-google:hover {
+      background-color: #f8f8f8;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      color: var(--gray);
+      font-size: 0.9rem;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .divider::before {
+      margin-right: 1rem;
+    }
+
+    .divider::after {
+      margin-left: 1rem;
+    }
+
+    .register-link {
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--gray);
+    }
+
+    .register-link a {
+      color: var(--secondary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+
+    .register-link a:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    .error-message {
+      color: var(--danger);
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+      display: none;
+    }
+
+    .shake {
+      animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+      20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+
+    @media (max-width: 992px) {
+      .login-container {
+        flex-direction: column;
+      }
+      
+      .login-image {
+        height: 200px;
+      }
+      
+      .brand-container {
+        padding: 1rem;
+      }
+      
+      .brand-logo {
+        font-size: 3rem;
+      }
+      
+      .brand-name {
+        font-size: 2rem;
+      }
+      
+      .login-form-container {
+        padding: 1.5rem;
+      }
+    }
+
+    .role-selector {
+      margin-bottom: 1.5rem;
+    }
+
+    .role-options {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .role-option {
+      flex: 1;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .role-option:hover {
+      border-color: var(--secondary);
+    }
+
+    .role-option.selected {
+      border-color: var(--secondary);
+      background-color: rgba(46, 64, 87, 0.1);
+    }
+
+    .role-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--secondary);
+    }
+
+    .role-name {
+      font-weight: 500;
+      color: var(--secondary);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-image">
+      <div class="brand-container">
+        <div class="brand-logo">
+          <i class="fas fa-tools"></i>
+        </div>
+        <div class="brand-name">ConstructRent</div>
+      </div>
+    </div>
+    
+    <div class="login-form-container">
+      <div class="login-header">
+        <h1 class="login-title">Bienvenido de nuevo</h1>
+        <p class="login-subtitle">Inicia sesión para acceder a tu cuenta</p>
+      </div>
+      
+      <form class="login-form" id="loginForm">
+        <div class="role-selector">
+          <div class="form-label">Selecciona tu rol</div>
+          <div class="role-options">
+            <div class="role-option" data-role="client">
+              <div class="role-icon">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="role-name">Cliente</div>
+            </div>
+            <div class="role-option" data-role="provider">
+              <div class="role-icon">
+                <i class="fas fa-store"></i>
+              </div>
+              <div class="role-name">Proveedor</div>
+            </div>
+            <div class="role-option" data-role="admin">
+              <div class="role-icon">
+                <i class="fas fa-user-shield"></i>
+              </div>
+              <div class="role-name">Admin</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="email" class="form-label">Correo electrónico</label>
+          <input type="email" id="email" class="form-control" placeholder="correo@gmail.com" required>
+          <div class="error-message" id="emailError">Por favor ingresa un correo electrónico válido</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="password" class="form-label">Contraseña</label>
+          <div class="input-group">
+            <input type="password" id="password" class="form-control" placeholder="Ingresa tu contraseña" required>
+            <span class="input-icon" id="togglePassword">
+              <i class="fas fa-eye"></i>
+            </span>
+          </div>
+          <div class="error-message" id="passwordError">La contraseña debe tener al menos 6 caracteres</div>
+        </div>
+        
+        <div class="remember-forgot">
+          <div class="checkbox-container">
+            <input type="checkbox" id="remember">
+            <label for="remember">Recordarme</label>
+          </div>
+          <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-sign-in-alt"></i>
+          Iniciar Sesión
+        </button>
+        
+        <div class="divider">o continúa con</div>
+        
+        
+        <div class="register-link">
+          ¿No tienes una cuenta? <a href="#">Regístrate ahora</a>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const roleOptions = document.querySelectorAll('.role-option');
+      let selectedRole = 'client'; 
+      
+      roleOptions.forEach(option => {
+        option.addEventListener('click', function() {
+          roleOptions.forEach(opt => opt.classList.remove('selected'));
+          
+          this.classList.add('selected');
+          
+          selectedRole = this.getAttribute('data-role');
+        });
+      });
+      
+      document.querySelector('.role-option[data-role="client"]').classList.add('selected');
+      
+      const togglePassword = document.getElementById('togglePassword');
+      const passwordInput = document.getElementById('password');
+      
+      togglePassword.addEventListener('click', function() {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        
+        this.querySelector('i').classList.toggle('fa-eye');
+        this.querySelector('i').classList.toggle('fa-eye-slash');
+      });
+      
+      const loginForm = document.getElementById('loginForm');
+      const emailInput = document.getElementById('email');
+      const emailError = document.getElementById('emailError');
+      const passwordError = document.getElementById('passwordError');
+      
+      loginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        let isValid = true;
+        
+        if (!validateEmail(emailInput.value)) {
+          emailError.style.display = 'block';
+          emailInput.classList.add('shake');
+          setTimeout(() => emailInput.classList.remove('shake'), 500);
+          isValid = false;
+        } else {
+          emailError.style.display = 'none';
+        }
+        
+        if (passwordInput.value.length < 6) {
+          passwordError.style.display = 'block';
+          passwordInput.classList.add('shake');
+          setTimeout(() => passwordInput.classList.remove('shake'), 500);
+          isValid = false;
+        } else {
+          passwordError.style.display = 'none';
+        }
+        
+        if (isValid) {
+          window.location.href = 'index.html';
+          
+        }
+      });
+      
+      function validateEmail(email) {
+        const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return re.test(String(email).toLowerCase());
+      }
+    });
+  </script>
+</body>
+</html>
