@@ -1,7 +1,3 @@
-/**
- * Lógica para la página de login
- */
-
 document.addEventListener('DOMContentLoaded', function() {
   // Selección de elementos
   const roleOptions = document.querySelectorAll('.role-option');
@@ -70,37 +66,41 @@ document.addEventListener('DOMContentLoaded', function() {
         passwordError.style.display = 'none';
       }
       
-      // Si el formulario es válido, guardar el rol y redirigir
       if (isValid) {
-        // Guardar el rol seleccionado en localStorage para usarlo en la página principal
+        // Guardar datos de autenticación
+        localStorage.setItem('isAuthenticated', 'true');
         localStorage.setItem('userRole', selectedRole);
-        localStorage.setItem('userEmail', emailInput.value);
         
         // Datos de usuario de ejemplo según el rol
         const userData = {
-          client: {
-            name: 'Elidallana Cristancho',
-            initials: 'EC',
-            notifications: 2
-          },
-          provider: {
-            name: 'Karen Lorena',
-            initials: 'KL',
-            notifications: 5
-          },
           admin: {
             name: 'Admin Principal',
             initials: 'AP',
             notifications: 8
+          },
+          provider: {
+            name: 'Proveedor Ejemplo',
+            initials: 'PE',
+            notifications: 5
+          },
+          client: {
+            name: 'Cliente Ejemplo',
+            initials: 'CE',
+            notifications: 2
           }
         };
         
-        // Guardar datos del usuario según el rol
         localStorage.setItem('userData', JSON.stringify(userData[selectedRole]));
         
-        // Redirigir a la página principal
-        window.location.href = 'index.html';
+        // Redirigir a dashboard única con parámetro de rol
+        window.location.href = `dashboard.html?role=${selectedRole}`;
       }
     });
+  }
+
+  // Función para validar email
+  function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
   }
 });

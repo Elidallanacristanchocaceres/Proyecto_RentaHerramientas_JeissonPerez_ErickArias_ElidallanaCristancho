@@ -2,49 +2,55 @@
  * Lógica principal de la aplicación
  */
 
-// Datos del usuario
-const USER_DATA = {
-  name: 'Elidallana Cristancho',
-  initials: 'EC',
-  notifications: 3
+// Datos del usuario por defecto
+const DEFAULT_USER_DATA = {
+  name: 'Usuario',
+  initials: 'US',
+  notifications: 0
 };
 
 // Estado de la aplicación
 let appState = {
-  currentRole: 'admin', // Rol por defecto
-  user: USER_DATA
+  currentRole: 'client', // Rol por defecto
+  user: DEFAULT_USER_DATA
 };
 
 // Función para inicializar la aplicación
 function initApp() {
-  // Cargar datos del usuario desde localStorage si existen
+  // Verificar autenticación
+  if (!localStorage.getItem('isAuthenticated')) {
+    window.location.href = 'login.html';
+    return;
+  }
+
+  // Cargar datos del usuario
   loadUserData();
   
-  // Renderizar la aplicación con el estado inicial
+  // Obtener rol de la URL o localStorage
+  const urlParams = new URLSearchParams(window.location.search);
+  const roleParam = urlParams.get('role');
+  const storedRole = localStorage.getItem('userRole');
+  
+  // Establecer rol actual
+  appState.currentRole = roleParam || storedRole || 'client';
+  
+  // Renderizar la aplicación
   renderApp();
   
-  // Configurar eventos después de renderizar
+  // Configurar eventos
   setupEvents();
 }
 
-// Función para cargar datos del usuario desde localStorage
+// Función para cargar datos del usuario
 function loadUserData() {
-  const storedRole = localStorage.getItem('userRole');
   const storedUserData = localStorage.getItem('userData');
-  
-  if (storedRole) {
-    appState.currentRole = storedRole;
-  }
   
   if (storedUserData) {
     try {
       const userData = JSON.parse(storedUserData);
-      // Combinar los datos del usuario almacenados con los datos predeterminados
       appState.user = {
-        ...USER_DATA,
-        name: userData.name || USER_DATA.name,
-        initials: userData.initials || USER_DATA.initials,
-        notifications: userData.notifications || USER_DATA.notifications
+        ...DEFAULT_USER_DATA,
+        ...userData
       };
     } catch (e) {
       console.error('Error al cargar datos del usuario:', e);
@@ -56,7 +62,6 @@ function loadUserData() {
 function renderApp() {
   const appContainer = document.getElementById('app');
   
-  // Crear la estructura principal de la aplicación
   appContainer.innerHTML = `
     <div class="container">
       ${createHeader(appState.user)}
@@ -66,9 +71,9 @@ function renderApp() {
         ${createSidebar(appState.currentRole)}
         
         <div class="content">
-          ${createAdminViews()}
-          ${createProviderViews()}
-          ${createClientViews()}
+          ${appState.currentRole === 'admin' ? createAdminViews() : ''}
+          ${appState.currentRole === 'provider' ? createProviderViews() : ''}
+          ${appState.currentRole === 'client' ? createClientViews() : ''}
         </div>
       </div>
       
@@ -79,155 +84,100 @@ function renderApp() {
 
 // Función para configurar eventos
 function setupEvents() {
-  // Evento para cambiar de rol
-  const roleSelector = $('#roleSelector');
-  if (roleSelector) {
-    // Establecer el valor del selector según el rol actual
-    roleSelector.value = appState.currentRole;
-    
-    addEvent(roleSelector, 'change', handleRoleChange);
-  }
-  
   // Eventos para los elementos de navegación
-  const navItems = $$('.nav-item');
-  addEventAll(navItems, 'click', handleNavItemClick);
+  const navItems = document.querySelectorAll('.nav-item');
+  navItems.forEach(item => {
+    item.addEventListener('click', handleNavItemClick);
+  });
   
-  // Evento para el toggle de notificaciones
-  const notificationsToggle = $('#notificationsToggle');
-  const notificationsPanel = $('#notificationsPanel');
+  // Evento para notificaciones
+  const notificationsToggle = document.getElementById('notificationsToggle');
+  const notificationsPanel = document.getElementById('notificationsPanel');
+  
   if (notificationsToggle && notificationsPanel) {
-    addEvent(notificationsToggle, 'click', function(e) {
+    notificationsToggle.addEventListener('click', function(e) {
       e.stopPropagation();
-      toggleElement(notificationsPanel);
+      notificationsPanel.classList.toggle('show');
     });
     
-    // Cerrar panel de notificaciones al hacer clic fuera
-    addEvent(document, 'click', function(e) {
-      if (notificationsPanel.classList.contains('show') && 
-          !notificationsPanel.contains(e.target) && 
-          e.target !== notificationsToggle) {
-        toggleElement(notificationsPanel, false);
+    // Cerrar panel al hacer clic fuera
+    document.addEventListener('click', function(e) {
+      if (!notificationsPanel.contains(e.target) && e.target !== notificationsToggle) {
+        notificationsPanel.classList.remove('show');
       }
     });
   }
-  
-  // Eventos para modales
-  setupModalEvents();
-    false;
-      }
-   
-  
-  
-  // Eventos para modales
-  setupModalEvents();
-  
-  // Eventos para botones específicos
-  setupButtonEvents();
   
   // Evento para cerrar sesión
-  const logoutBtn = $('#logoutBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
-    addEvent(logoutBtn, 'click', function() {
-      // Limpiar localStorage
-      localStorage.removeItem('userRole');
-      localStorage.removeItem('userData');
-      
-      // Redirigir a la página de login
+    logoutBtn.addEventListener('click', function() {
+      localStorage.clear();
       window.location.href = 'login.html';
     });
   }
-
-
-// Función para manejar el cambio de rol
-function handleRoleChange(e) {
-  const role = e.target.value;
   
-  // Actualizar el estado de la aplicación
-  appState.currentRole = role;
-  
-  // Guardar el rol en localStorage
-  localStorage.setItem('userRole', role);
-  
-  // Ocultar todos los menús
-  hideAll('.nav-menu');
-  
-  // Mostrar el menú correspondiente al rol seleccionado
-  showElement($(`.${role}-menu`));
-  
-  // Ocultar todas las vistas
-  hideAll('.view');
-  
-  // Mostrar la vista de dashboard del rol seleccionado
-  showElement($(`.${role}-dashboard-view`));
-  
-  // Actualizar clases activas en los elementos de navegación
-  removeClassFromAll('.nav-item', 'active');
-  
-  // Activar el primer elemento de navegación del rol seleccionado
-  const firstNavItem = $(`.${role}-menu .nav-item[data-view="${role}-dashboard"]`);
-  if (firstNavItem) {
-    addClass(firstNavItem, 'active');
-  }
+  // Configurar eventos de modales
+  setupModalEvents();
 }
 
-// Función para manejar el clic en elementos de navegación
+// Función para manejar clic en items de navegación
 function handleNavItemClick(e) {
   const navItem = e.currentTarget;
   const viewName = navItem.getAttribute('data-view');
   
-  // Remover clase activa de todos los elementos de navegación
-  removeClassFromAll('.nav-item', 'active');
+  // Remover clase activa de todos los items
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.classList.remove('active');
+  });
   
-  // Agregar clase activa al elemento clickeado
-  addClass(navItem, 'active');
+  // Agregar clase activa al item clickeado
+  navItem.classList.add('active');
   
   // Ocultar todas las vistas
-  hideAll('.view');
+  document.querySelectorAll('.view').forEach(view => {
+    view.classList.add('hidden');
+  });
   
   // Mostrar la vista correspondiente
-  showElement($(`.${viewName}-view`));
+  const viewToShow = document.querySelector(`.${viewName}-view`);
+  if (viewToShow) {
+    viewToShow.classList.remove('hidden');
+  }
 }
 
 // Función para configurar eventos de modales
 function setupModalEvents() {
   // Modal de agregar herramienta
-  const addToolModal = $('#addToolModal');
-  const addToolBtn = $('#addToolBtn');
-  const closeToolModal = $('#closeToolModal');
-  const cancelToolBtn = $('#cancelToolBtn');
+  const addToolModal = document.getElementById('addToolModal');
+  const addToolBtn = document.getElementById('addToolBtn');
+  const closeToolModal = document.getElementById('closeToolModal');
+  const cancelToolBtn = document.getElementById('cancelToolBtn');
   
   if (addToolBtn && addToolModal) {
-    addEvent(addToolBtn, 'click', function() {
-      toggleElement(addToolModal, true);
+    addToolBtn.addEventListener('click', () => {
+      addToolModal.classList.add('show');
     });
   }
   
   if (closeToolModal && addToolModal) {
-    addEvent(closeToolModal, 'click', function() {
-      toggleElement(addToolModal, false);
+    closeToolModal.addEventListener('click', () => {
+      addToolModal.classList.remove('show');
     });
   }
   
   if (cancelToolBtn && addToolModal) {
-    addEvent(cancelToolBtn, 'click', function() {
-      toggleElement(addToolModal, false);
+    cancelToolBtn.addEventListener('click', () => {
+      addToolModal.classList.remove('show');
     });
   }
   
   // Cerrar modal al hacer clic fuera
-  if (addToolModal) {
-    addEvent(window, 'click', function(e) {
-      if (e.target === addToolModal) {
-        toggleElement(addToolModal, false);
-      }
-    });
-  }
-}
-
-// Función para configurar eventos de botones específicos
-function setupButtonEvents() {
-  // Aquí se pueden agregar eventos para botones específicos
-  // Por ejemplo, botones de acción en tablas, etc.
+  window.addEventListener('click', (e) => {
+    if (e.target === addToolModal) {
+      addToolModal.classList.remove('show');
+    }
+  });
 }
 
 // Inicializar la aplicación cuando el DOM esté cargado
