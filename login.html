@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ConstructRent - Iniciar Sesión</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="./constructrent/css/style.css">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-image">
+      <div class="brand-container">
+        <div class="brand-logo">
+          <i class="fas fa-tools"></i>
+        </div>
+        <div class="brand-name">ConstructRent</div>
+      </div>
+    </div>
+    
+    <div class="login-form-container">
+      <div class="login-header">
+        <h1 class="login-title">Bienvenido de nuevo</h1>
+        <p class="login-subtitle">Inicia sesión para acceder a tu cuenta</p>
+      </div>
+      
+      <form class="login-form" id="loginForm">
+        <div class="role-selector">
+          <div class="form-label">Selecciona tu rol</div>
+          <div class="role-options">
+            <div class="role-option" data-role="client">
+              <div class="role-icon">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="role-name">Cliente</div>
+            </div>
+            <div class="role-option" data-role="provider">
+              <div class="role-icon">
+                <i class="fas fa-store"></i>
+              </div>
+              <div class="role-name">Proveedor</div>
+            </div>
+            <div class="role-option" data-role="admin">
+              <div class="role-icon">
+                <i class="fas fa-user-shield"></i>
+              </div>
+              <div class="role-name">Admin</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="email" class="form-label">Correo electrónico</label>
+          <input type="email" id="email" class="form-control" placeholder="correo@gmail.com" required>
+          <div class="error-message" id="emailError">Por favor ingresa un correo electrónico válido</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="password" class="form-label">Contraseña</label>
+          <div class="input-group">
+            <input type="password" id="password" class="form-control" placeholder="Ingresa tu contraseña" required>
+            <span class="input-icon" id="togglePassword">
+              <i class="fas fa-eye"></i>
+            </span>
+          </div>
+          <div class="error-message" id="passwordError">La contraseña debe tener al menos 6 caracteres</div>
+        </div>
+        
+        <div class="remember-forgot">
+          <div class="checkbox-container">
+            <input type="checkbox" id="remember">
+            <label for="remember">Recordarme</label>
+          </div>
+          <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-sign-in-alt"></i>
+          Iniciar Sesión
+        </button>
+        
+        <div class="divider">o continúa con</div>
+        
+        <div class="register-link">
+          ¿No tienes una cuenta? <a href="#">Regístrate ahora</a>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Utilidades -->
+  <script src="./constructrent/js/utils/utils.js"></script>
+  
+  <!-- Login -->
+  <script src="./constructrent/js/login.js"></script>
+</body>
+</html>
