@@ -1,8 +1,4 @@
-/**
- * Vistas para el rol de Cliente
- */
 
-// Datos para las vistas de cliente
 const clientData = {
   stats: {
     activeRentals: { value: '2', text: 'Devolución próxima: 18/05' },

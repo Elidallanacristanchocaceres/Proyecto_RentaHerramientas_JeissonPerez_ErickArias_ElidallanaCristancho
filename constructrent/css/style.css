@@ -997,3 +997,182 @@ textarea.form-control {
 .loading i {
   font-size: 3rem;
 }
+/* Add these new styles to your existing CSS file */
+
+/* Enhanced Login Error States */
+.login-form .form-group.has-error .form-control {
+  border-color: var(--danger);
+  animation: shake 0.5s;
+}
+
+.login-form .form-group.has-error .error-message {
+  display: block;
+}
+
+/* Loading State for Login Button */
+.btn-loading {
+  position: relative;
+  pointer-events: none;
+}
+
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: auto;
+  border: 3px solid transparent;
+  border-top-color: white;
+  border-radius: 50%;
+  animation: button-loading-spinner 1s ease infinite;
+}
+
+@keyframes button-loading-spinner {
+  from {
+    transform: rotate(0turn);
+  }
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* Enhanced Role Selection */
+.role-options {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.role-option {
+  flex: 1;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  padding: 20px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: white;
+}
+
+.role-option:hover {
+  border-color: var(--secondary);
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(46, 64, 87, 0.1);
+}
+
+.role-option.selected {
+  border-color: var(--secondary);
+  background-color: rgba(46, 64, 87, 0.05);
+  box-shadow: 0 5px 20px rgba(46, 64, 87, 0.15);
+}
+
+.role-icon {
+  font-size: 28px;
+  margin-bottom: 10px;
+  color: var(--secondary);
+  transition: all 0.3s ease;
+}
+
+.role-option.selected .role-icon {
+  transform: scale(1.1);
+}
+
+.role-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--dark);
+  transition: all 0.3s ease;
+}
+
+.role-option.selected .role-name {
+  color: var(--secondary);
+  font-weight: 700;
+}
+
+/* Password Input Group */
+.password-input-group {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: var(--gray);
+  transition: color 0.3s;
+}
+
+.password-toggle:hover {
+  color: var(--secondary);
+}
+
+/* Responsive Adjustments for Login */
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
+  }
+  
+  .login-image {
+    height: 200px;
+    padding: 2rem;
+  }
+  
+  .login-form-container {
+    padding: 2rem;
+  }
+  
+  .role-options {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 576px) {
+  .login-form-container {
+    padding: 1.5rem;
+  }
+  
+  .login-title {
+    font-size: 24px;
+  }
+  
+  .login-subtitle {
+    font-size: 14px;
+  }
+  
+  .role-option {
+    padding: 15px 10px;
+  }
+  
+  .role-icon {
+    font-size: 24px;
+  }
+}
+
+/* Success Message After Login */
+.login-success-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: var(--success);
+  color: white;
+  padding: 15px 25px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transform: translateX(150%);
+  transition: transform 0.3s ease;
+}
+
+.login-success-message.show {
+  transform: translateX(0);
+}

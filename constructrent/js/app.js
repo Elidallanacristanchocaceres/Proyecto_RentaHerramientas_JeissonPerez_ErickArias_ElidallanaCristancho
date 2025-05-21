@@ -1,21 +1,14 @@
-/**
- * Lógica principal de la aplicación
- */
-
-// Datos del usuario por defecto
 const DEFAULT_USER_DATA = {
   name: 'Usuario',
   initials: 'US',
   notifications: 0
 };
 
-// Estado de la aplicación
 let appState = {
-  currentRole: 'client', // Rol por defecto
+  currentRole: 'client',
   user: DEFAULT_USER_DATA
 };
 
-// Función para inicializar la aplicación
 function initApp() {
   // Verificar autenticación
   if (!localStorage.getItem('isAuthenticated')) {

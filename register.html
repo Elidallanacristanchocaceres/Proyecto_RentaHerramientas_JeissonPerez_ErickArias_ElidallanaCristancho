@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registro - ConstructRent</title>
+  <link rel="stylesheet" href="./constructrent/css/style.css" />
+  <script defer type="module" src="./constructrent/js/register.js"></script>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-image">
+      <div class="brand-container">
+        <div class="brand-logo"><i class="fas fa-tools"></i></div>
+        <div class="brand-name">ConstructRent</div>
+      </div>
+    </div>
+    <div class="login-form-container">
+      <div class="login-header">
+        <h2 class="login-title">Crear una cuenta</h2>
+        <p class="login-subtitle">Completa los datos para registrarte</p>
+      </div>
+      <form id="registerForm" class="login-form">
+        <input type="text" class="form-control" name="nombre" placeholder="Nombre completo" required />
+        <input type="email" class="form-control" name="correo" placeholder="Correo electrónico" required />
+        <input type="password" class="form-control" name="contrasena" placeholder="Contraseña" required />
+        <input type="text" class="form-control" name="telefono" placeholder="Telefono">
+        <input type="text" class="form-control" name="direccion" placeholder="Direccion">
+        <div class="role-options">
+          <div class="role-option selected" data-role="CLIENTE">
+            <div class="role-icon"><i class="fas fa-user"></i></div>
+            <div class="role-name">Cliente</div>
+          </div>
+          <div class="role-option" data-role="PROVEEDOR">
+            <div class="role-icon"><i class="fas fa-store"></i></div>
+            <div class="role-name">Proveedor</div>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Registrarse</button>
+        <div class="register-link">¿Ya tienes cuenta? <a href="login.html">Inicia sesión</a></div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>
