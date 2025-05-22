@@ -2,7 +2,7 @@
  * Componente de Sidebar
  */
 
-function createSidebar(currentRole) {
+export function createSidebar(currentRole) {
   return `
     <div class="sidebar">
       <div class="sidebar-header">

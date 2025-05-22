@@ -2,7 +2,7 @@
  * Componentes de Tablas
  */
 
-function createTable(title, headers, rows, searchable = true) {
+export function createTable(title, headers, rows, searchable = true) {
   return `
     <div class="table-container">
       <div class="table-header">

@@ -1,3 +1,8 @@
+import { createAdminViews } from './roles/admin.js';
+import { createHeader,createNotificationsPanel } from './components/header.js';
+import { createSidebar } from './components/sidebar.js';
+import { createAddToolModal } from './components/modals.js';
+
 const DEFAULT_USER_DATA = {
   name: 'Usuario',
   initials: 'US',
@@ -5,7 +10,7 @@ const DEFAULT_USER_DATA = {
 };
 
 let appState = {
-  currentRole: 'client',
+  currentRole: 'admin',
   user: DEFAULT_USER_DATA
 };
 

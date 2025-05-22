@@ -2,7 +2,7 @@
  * Componente de Header
  */
 
-function createHeader(userData) {
+export function createHeader(userData) {
   return `
     <header>
       <div class="logo">
@@ -23,7 +23,7 @@ function createHeader(userData) {
   `;
 }
 
-function createNotificationsPanel() {
+export function createNotificationsPanel() {
   return `
     <div class="notifications-panel" id="notificationsPanel">
       <div class="notifications-header">

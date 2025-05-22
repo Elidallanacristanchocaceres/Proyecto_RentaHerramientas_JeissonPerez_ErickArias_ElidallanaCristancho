@@ -81,6 +81,7 @@ async function handleLogin(event) {
 
     localStorage.setItem('authToken', data.token);
     localStorage.setItem('userRole', role);
+    localStorage.setItem('isAuthenticated', true);
 
 
     redirectUser(role);

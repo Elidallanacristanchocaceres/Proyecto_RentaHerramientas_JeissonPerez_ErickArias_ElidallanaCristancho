@@ -2,7 +2,7 @@
  * Componentes de Modales
  */
 
-function createAddToolModal() {
+export function createAddToolModal() {
   return `
     <div class="modal-overlay" id="addToolModal">
       <div class="modal">
