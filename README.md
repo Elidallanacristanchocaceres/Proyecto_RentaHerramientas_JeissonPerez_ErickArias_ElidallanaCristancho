@@ -103,19 +103,17 @@ Editar
 4. Abrir el frontend
 Puedes abrir el archivo index.html directamente en tu navegador o servirlo con un servidor local como Live Server.
 
-📦 Estructura del Proyecto
-bash
-Copiar
-Editar
-📁 frontend/
+##📦 Estructura del Proyecto
+### 📁 frontend/
+````bash
    ├── index.html
    ├── styles/
    │   └── main.css
    └── scripts/
        └── app.js
-
-📁 backend/
-   
+````
+### 📁 backend/
+````bash
  com.herramienta.herramienta_app/
 │
 ├── HerramientaAppApplication.java (Main application class)
@@ -167,7 +165,7 @@ Editar
         ├── ProveedorRepository.java
         ├── ReservaRepository.java
         └── UsuarioRepository.java
-        
+```` 
 🧪 Pruebas
 Las pruebas de backend se realizan con JUnit y Postman.
 
