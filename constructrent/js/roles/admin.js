@@ -1,44 +1,24 @@
 import { apiService } from '../services/apiService.js';
 import { createStatCard } from '../components/cards.js';
 import { createTable } from '../components/tables.js';
+
+// === Vista del Dashboard ===
 async function createAdminDashboardView() {
   try {
-    const [users, tools, rentals, income] = await Promise.all([
+    const [users, tools, rentals] = await Promise.all([
       apiService.getUsuarios(),
       apiService.getHerramientas(),
-      apiService.getReservas(),
-      //apiService.getFacturas()
+      apiService.getReservas()
     ]);
-
-    console.log(users, tools, rentals, income);
-
-    const stats = {
-      users: {
-        value: users.length.toString(),
-        change: { type: 'positive', icon: 'fas fa-arrow-up', text: '12% desde el mes pasado' }
-      },
-      tools: {
-        value: tools.length.toString(),
-        change: { type: 'positive', icon: 'fas fa-arrow-up', text: '8% desde el mes pasado' }
-      },
-      rentals: {
-        value: rentals.length.toString(),
-        change: { type: 'positive', icon: 'fas fa-arrow-up', text: '5% desde el mes pasado' }
-      },
-      income: {
-        value: `$${income.reduce((sum, invoice) => sum + parseFloat(invoice.monto), 0).toFixed(2)}`,
-        change: { type: 'positive', icon: 'fas fa-arrow-up', text: '15% desde el mes pasado' }
-      }
-    };
 
     const recentRentals = rentals.slice(0, 5).map(rental => [
       rental.id,
-      rental.cliente.nombre,
-      rental.herramienta.nombre,
-      rental.fechaInicio,
-      rental.fechaFin,
-      `<span class="status status-${rental.estado.toLowerCase()}">${rental.estado}</span>`,
-      `$${rental.precio}`,
+      rental.cliente?.nombre || 'Cliente no disponible',
+      rental.herramienta?.nombre || 'Herramienta no disponible',
+      rental.fechaInicio || 'No especificada',
+      rental.fechaFin || 'No especificada',
+      `<span class="status status-${rental.estado?.toLowerCase() || 'unknown'}">${rental.estado || 'Desconocido'}</span>`,
+      `$${parseFloat(rental.precio || 0).toFixed(2)}`,
       '<i class="fas fa-eye action-icon"></i> <i class="fas fa-edit action-icon"></i>'
     ]);
 
@@ -58,10 +38,9 @@ async function createAdminDashboardView() {
           </div>
         </div>
         <div class="stats-container">
-          ${createStatCard('Usuarios Totales', stats.users.value, 'fas fa-users', '#5e72e4', stats.users.change)}
-          ${createStatCard('Herramientas Registradas', stats.tools.value, 'fas fa-tools', '#11cdef', stats.tools.change)}
-          ${createStatCard('Alquileres Activos', stats.rentals.value, 'fas fa-clipboard-list', '#fb6340', stats.rentals.change)}
-          ${createStatCard('Ingresos Mensuales', stats.income.value, 'fas fa-dollar-sign', '#2dce89', stats.income.change)}
+          ${createStatCard('Usuarios Totales', users.length.toString(), 'fas fa-users', '#5e72e4', { type: 'positive', icon: 'fas fa-arrow-up', text: '12% desde el mes pasado' })}
+          ${createStatCard('Herramientas Registradas', tools.length.toString(), 'fas fa-tools', '#11cdef', { type: 'positive', icon: 'fas fa-arrow-up', text: '8% desde el mes pasado' })}
+          ${createStatCard('Alquileres Activos', rentals.length.toString(), 'fas fa-clipboard-list', '#fb6340', { type: 'positive', icon: 'fas fa-arrow-up', text: '5% desde el mes pasado' })}
         </div>
         ${createTable('Alquileres Recientes', ['ID', 'Cliente', 'Herramienta', 'Fecha Inicio', 'Fecha Fin', 'Estado', 'Monto', 'Acciones'], recentRentals)}
       </div>
@@ -72,17 +51,18 @@ async function createAdminDashboardView() {
   }
 }
 
+// === Vista de Usuarios ===
 async function createAdminUsersView() {
   try {
     const users = await apiService.getUsuarios();
 
     const userData = users.map(user => [
       user.id,
-      user.nombre,
-      user.email,
-      user.rol,
-      user.fechaRegistro,
-      `<span class="status status-${user.estado === 'Activo' ? 'available' : 'maintenance'}">${user.estado}</span>`,
+      user.nombre || 'Nombre no disponible',
+      user.email || 'Email no disponible',
+      user.rol || 'Rol no definido',
+      user.fechaRegistro || 'Fecha no registrada',
+      `<span class="status status-${user.estado === 'Activo' ? 'available' : 'maintenance'}">${user.estado || 'Sin estado'}</span>`,
       '<i class="fas fa-eye action-icon"></i> <i class="fas fa-edit action-icon"></i> <i class="fas fa-trash action-icon"></i>'
     ]);
 
@@ -109,23 +89,26 @@ async function createAdminUsersView() {
     return `<div>Error al cargar la lista de usuarios.</div>`;
   }
 }
-// Vista de Alquileres de Administrador
+
+// === Vista de Alquileres ===
 async function createAdminRentalsView() {
   try {
-    const rentals = await apiService.getReservas();
-    const providers = await apiService.getProveedores();
+    const [rentals, providers] = await Promise.all([
+      apiService.getReservas(),
+      apiService.getProveedores()
+    ]);
 
-    const rentalData = rentals.slice(0, 5).map(rental => {
+    const rentalData = rentals.map(rental => {
       const provider = providers.find(p => p.id === rental.proveedorId) || { nombre: 'Proveedor no encontrado' };
       return [
         rental.id,
-        rental.cliente.nombre,
+        rental.cliente?.nombre || 'Cliente no disponible',
         provider.nombre,
-        rental.herramienta.nombre,
-        rental.fechaInicio,
-        rental.fechaFin,
-        `<span class="status status-${rental.estado.toLowerCase()}">${rental.estado}</span>`,
-        `$${rental.precio}`,
+        rental.herramienta?.nombre || 'Herramienta no disponible',
+        rental.fechaInicio || 'No especificada',
+        rental.fechaFin || 'No especificada',
+        `<span class="status status-${rental.estado?.toLowerCase() || 'unknown'}">${rental.estado || 'Desconocido'}</span>`,
+        `$${parseFloat(rental.precio || 0).toFixed(2)}`,
         '<i class="fas fa-eye action-icon"></i> <i class="fas fa-edit action-icon"></i>'
       ];
     });
@@ -145,12 +128,6 @@ async function createAdminRentalsView() {
             </button>
           </div>
         </div>
-        <div class="stats-container">
-          ${createStatCard('Alquileres Totales', rentals.length.toString(), 'fas fa-clipboard-list', '#fb6340', { type: 'positive', icon: 'fas fa-arrow-up', text: '8% desde el mes pasado' })}
-          ${createStatCard('Alquileres Activos', rentals.filter(r => r.estado === 'En Alquiler').length.toString(), 'fas fa-clock', '#11cdef', { type: 'positive', icon: 'fas fa-arrow-up', text: '5% desde el mes pasado' })}
-          ${createStatCard('Devoluciones Pendientes', rentals.filter(r => r.estado === 'Pendiente').length.toString(), 'fas fa-exclamation-circle', '#fb6340', { type: 'negative', icon: 'fas fa-arrow-up', text: '12% desde el mes pasado' })}
-          ${createStatCard('Reportes de Daños', rentals.filter(r => r.estado === 'Dañado').length.toString(), 'fas fa-tools', '#f5365c', { type: 'negative', icon: 'fas fa-arrow-up', text: '3% desde el mes pasado' })}
-        </div>
         ${createTable('Todos los Alquileres', ['ID', 'Cliente', 'Proveedor', 'Herramienta', 'Fecha Inicio', 'Fecha Fin', 'Estado', 'Monto', 'Acciones'], rentalData)}
       </div>
     `;
@@ -160,37 +137,26 @@ async function createAdminRentalsView() {
   }
 }
 
-// Vista de Reportes de Administrador
+// === Vista de Reportes ===
 async function createAdminReportsView() {
   try {
-    const [invoices, herramientas, proveedores, reservas] = await Promise.all([
-      //apiService.getFacturas(),
+    const [tools, providers, reservas] = await Promise.all([
       apiService.getHerramientas(),
       apiService.getProveedores(),
       apiService.getReservas()
     ]);
 
-    // Validación segura
-    const totalIncome = Array.isArray(invoices)
-      ? invoices.reduce((sum, inv) => sum + parseFloat(inv.monto || 0), 0)
-      : 0;
-
-    // Agrupar alquileres por categoría
+    // Agrupar por categoría
     const rentalsByCategory = {};
-    if (Array.isArray(herramientas)) {
-      herramientas.forEach(h => {
-        if (!rentalsByCategory[h.categoria]) rentalsByCategory[h.categoria] = 0;
-        rentalsByCategory[h.categoria]++;
+    if (Array.isArray(tools)) {
+      tools.forEach(h => {
+        const categoria = h.categoria || 'Sin categoría';
+        rentalsByCategory[categoria] = (rentalsByCategory[categoria] || 0) + 1;
       });
     }
 
-    const mostRentedCategory = Object.entries(rentalsByCategory).reduce(
-      (a, b) => (b[1] > a[1] ? b : a),
-      ['', 0]
-    )[0];
-
     // Proveedor más activo
-    const activeProvider = (Array.isArray(proveedores) ? proveedores : []).sort((a, b) => {
+    const activeProvider = (Array.isArray(providers) ? providers : []).sort((a, b) => {
       const countA = (Array.isArray(reservas) ? reservas.filter(r => r.proveedorId === a.id) : []).length;
       const countB = (Array.isArray(reservas) ? reservas.filter(r => r.proveedorId === b.id) : []).length;
       return countB - countA;
@@ -206,19 +172,9 @@ async function createAdminReportsView() {
           </div>
         </div>
         <div class="stats-container">
-          ${createStatCard('Ingresos Totales', `$${totalIncome.toFixed(2)}`, 'fas fa-dollar-sign', '#2dce89', { type: 'positive', icon: 'fas fa-arrow-up', text: '15% desde el año pasado' })}
-          ${createStatCard('Herramientas Más Rentadas', mostRentedCategory, 'fas fa-tools', '#11cdef', { text: `${Math.round((rentalsByCategory[mostRentedCategory] / herramientas.length) * 100)}% del total de alquileres` })}
-          ${createStatCard('Proveedor Más Activo', activeProvider?.nombre || 'Ninguno', 'fas fa-store', '#5e72e4', { text: `${reservas?.filter(r => r.proveedorId === activeProvider?.id)?.length || 0} alquileres este mes` })}
-          ${createStatCard('Tasa de Incidencias', '3.2%', 'fas fa-exclamation-triangle', '#f5365c', { type: 'positive', icon: 'fas fa-arrow-down', text: '0.5% desde el mes pasado' })}
+          ${createStatCard('Herramientas Más Rentadas', Object.keys(rentalsByCategory)[0] || 'Ninguna', 'fas fa-tools', '#11cdef', { text: 'Mayor uso por categoría' })}
+          ${createStatCard('Proveedor Más Activo', activeProvider?.nombre || 'Ninguno', 'fas fa-store', '#5e72e4', { text: 'Mayor cantidad de alquileres' })}
         </div>
-        ${createTable('Rentabilidad por Categoría', ['Categoría', 'Alquileres', 'Ingresos', 'Tasa de Uso', 'Incidencias', 'Rentabilidad'], Object.entries(rentalsByCategory).map(([cat, count]) => [
-      cat,
-      count.toString(),
-      `$${(count * 100).toFixed(2)}`,
-      `${Math.min(count * 10, 100)}%`,
-      `${Math.floor(Math.random() * 5)}%`,
-      count > 50 ? 'Alta' : 'Media'
-    ]))}
       </div>
     `;
   } catch (error) {
@@ -227,12 +183,17 @@ async function createAdminReportsView() {
   }
 }
 
-// Función para crear todas las vistas de administrador
-export function createAdminViews() {
-  return `
-    ${createAdminDashboardView()}
-    ${createAdminUsersView()}
-    ${createAdminRentalsView()}
-    ${createAdminReportsView()}
-  `;
+// === Función principal para crear todas las vistas ===
+export async function createAdminViews() {
+  try {
+    const dashboard = await createAdminDashboardView();
+    const users = await createAdminUsersView();
+    const rentals = await createAdminRentalsView();
+    const reports = await createAdminReportsView();
+
+    return `${dashboard}${users}${rentals}${reports}`;
+  } catch (error) {
+    console.error('Error creating admin views:', error);
+    return `<div>Error al cargar las vistas de administrador.</div>`;
+  }
 }

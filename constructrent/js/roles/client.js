@@ -1,202 +1,254 @@
+import { apiService } from '../services/apiService.js';
+import { createStatCard } from '../components/cards.js';
+import { createTable } from '../components/tables.js';
 
-const clientData = {
-  stats: {
-    activeRentals: { value: '2', text: 'Devolución próxima: 18/05' },
-    history: { value: '12', text: 'Último: hace 2 semanas' },
-    pendingPayments: { value: '1', text: 'Vence: 20/05/2023' },
-    favorites: { value: '5', text: 'Añadida recientemente: Taladro' }
-  },
-  tools: [
-    {
-      name: 'Taladro Industrial DeWalt',
-      category: 'Taladros',
-      price: '$40.00 / día',
-      description: 'Taladro industrial de alta potencia, ideal para trabajos de construcción pesada.',
-      image: 'https://via.placeholder.com/300x180?text=Taladro+Industrial',
-      status: 'available',
-      statusText: 'Disponible',
-      actions: [
-        { icon: 'fas fa-heart', class: 'btn-secondary' },
-        { icon: 'fas fa-shopping-cart', class: 'btn-primary', text: 'Alquilar' }
-      ]
-    },
-    {
-      name: 'Sierra Circular Makita',
-      category: 'Sierras',
-      price: '$35.00 / día',
-      description: 'Sierra circular profesional con disco de 7-1/4", ideal para cortes precisos en madera.',
-      image: 'https://via.placeholder.com/300x180?text=Sierra+Circular',
-      status: 'available',
-      statusText: 'Disponible',
-      actions: [
-        { icon: 'fas fa-heart', class: 'btn-secondary' },
-        { icon: 'fas fa-shopping-cart', class: 'btn-primary', text: 'Alquilar' }
-      ]
-    }
-  ]
-};
-
-// Vista de Dashboard de Cliente
-function createClientDashboardView() {
+// === Función auxiliar para crear tarjetas de herramientas ===
+function createToolCard(tool) {
   return `
-    <div class="view client-view client-dashboard-view hidden">
-      <div class="dashboard-header">
-        <div class="dashboard-title">Mi Panel</div>
-        <div class="action-buttons">
+    <div class="tool-card">
+      <img src="${tool.imagenUrl || 'https://via.placeholder.com/300x180?text=Herramienta+no+disponible '}" alt="${tool.nombre}" />
+      <div class="tool-info">
+        <h3>${tool.nombre}</h3>
+        <p><strong>Marca:</strong> ${tool.marca || 'Sin marca'}</p>
+        <p><strong>Modelo:</strong> ${tool.modelo || 'Desconocido'}</p>
+        <p><strong>Categoría:</strong> ${tool.categoria || 'Sin categoría'}</p>
+        <p><strong>Precio:</strong> $${parseFloat(tool.costoPorDia || 0).toFixed(2)} / día</p>
+        <p><strong>Cantidad disponible:</strong> ${tool.cantidadDisponible || 0}</p>
+        <p><strong>Estado:</strong>
+          <span class="status status-${tool.activa ? 'available' : 'maintenance'}">
+            ${tool.activa ? 'Activa' : 'Inactiva'}
+          </span>
+        </p>
+        <div class="actions">
+          <button class="btn btn-secondary">
+            <i class="fas fa-eye"></i> Ver detalles
+          </button>
           <button class="btn btn-primary">
-            <i class="fas fa-search"></i>
-            <span>Buscar Herramientas</span>
+            <i class="fas fa-shopping-cart"></i> Alquilar
           </button>
         </div>
       </div>
-      
-      <div class="stats-container">
-        ${createStatCard('Alquileres Activos', clientData.stats.activeRentals.value, 'fas fa-clipboard-list', '#fb6340', { text: clientData.stats.activeRentals.text })}
-        ${createStatCard('Historial de Alquileres', clientData.stats.history.value, 'fas fa-history', '#5e72e4', { text: clientData.stats.history.text })}
-        ${createStatCard('Pagos Pendientes', clientData.stats.pendingPayments.value, 'fas fa-file-invoice-dollar', '#fb6340', { text: clientData.stats.pendingPayments.text })}
-        ${createStatCard('Herramientas Favoritas', clientData.stats.favorites.value, 'fas fa-heart', '#f5365c', { text: clientData.stats.favorites.text })}
-      </div>
-      
-      ${createTable('Mis Alquileres Activos', 
-        ['ID', 'Herramienta', 'Proveedor', 'Fecha Inicio', 'Fecha Fin', 'Monto', 'Estado', 'Acciones'], 
-        [
-          ['#12345', 'Taladro Industrial', 'Herramientas Pro', '15/05/2023', '18/05/2023', '$120.00', '<span class="status status-rented">En Alquiler</span>', '<i class="fas fa-eye action-icon"></i> <i class="fas fa-undo action-icon"></i>'],
-          ['#12344', 'Mezcladora de Concreto', 'Construmax', '14/05/2023', '20/05/2023', '$350.00', '<span class="status status-rented">En Alquiler</span>', '<i class="fas fa-eye action-icon"></i> <i class="fas fa-undo action-icon"></i>']
-        ], false)}
     </div>
   `;
 }
 
-// Vista de Explorar de Cliente
-function createClientExploreView() {
-  return `
-    <div class="view client-view client-explore-view hidden">
-      <div class="dashboard-header">
-        <div class="dashboard-title">Explorar Herramientas</div>
-        <div class="action-buttons">
-          <button class="btn btn-secondary">
-            <i class="fas fa-filter"></i>
-            <span>Filtrar</span>
-          </button>
-          <div class="search-box">
-            <i class="fas fa-search"></i>
-            <input type="text" placeholder="Buscar herramientas...">
+// === Vista de Dashboard de Cliente ===
+async function createClientDashboardView() {
+  try {
+    const [rentals, tools, payments] = await Promise.all([
+      apiService.getReservas(),
+      apiService.getHerramientas(),
+      apiService.getFacturas()
+    ]);
+
+    // Simulamos clienteId = 1 (ajustar según sesión)
+    const activeRentals = rentals.filter(r => r.clienteId === 1 && r.estado === 'En Alquiler');
+    const pendingPayments = payments.filter(p => p.estado === 'Pendiente');
+
+    return `
+      <div class="view client-view client-dashboard-view">
+        <div class="dashboard-header">
+          <div class="dashboard-title">Mi Panel</div>
+          <div class="action-buttons">
+            <button class="btn btn-primary">
+              <i class="fas fa-search"></i>
+              <span>Buscar Herramientas</span>
+            </button>
           </div>
         </div>
+
+        <div class="stats-container">
+          ${createStatCard('Alquileres Activos', activeRentals.length.toString(), 'fas fa-clipboard-list', '#fb6340', { text: 'Última devolución: hace 2 semanas' })}
+          ${createStatCard('Historial de Alquileres', rentals.length.toString(), 'fas fa-history', '#5e72e4', { text: 'Último: hace 3 semanas' })}
+          ${createStatCard('Pagos Pendientes', pendingPayments.length.toString(), 'fas fa-file-invoice-dollar', '#f5365c', { text: 'Vence: 20/05/2023' })}
+          ${createStatCard('Herramientas Favoritas', '5', 'fas fa-heart', '#2dce89', { text: 'Taladro Industrial añadido recientemente' })}
+        </div>
+
+        ${createTable('Mis Alquileres Activos', 
+          ['ID', 'Herramienta', 'Proveedor', 'Fecha Inicio', 'Fecha Fin', 'Monto', 'Estado', 'Acciones'], 
+          activeRentals.slice(0, 2).map(rental => [
+            rental.id,
+            rental.herramienta?.nombre || 'Herramienta no disponible',
+            rental.proveedor?.nombre || 'Proveedor no encontrado',
+            rental.fechaInicio || 'No especificada',
+            rental.fechaFin || 'No especificada',
+            `$${parseFloat(rental.precio || 0).toFixed(2)}`,
+            `<span class="status status-rented">${rental.estado || 'En Alquiler'}</span>`,
+            '<i class="fas fa-eye action-icon"></i> <i class="fas fa-undo action-icon"></i>'
+          ])
+        )}
       </div>
-      
-      <div class="tools-grid">
-        ${clientData.tools.map(tool => createToolCard(tool)).join('')}
-        
-        ${createToolCard({
-          name: 'Compresor de Aire 50L',
-          category: 'Compresores',
-          price: '$45.00 / día',
-          description: 'Compresor de aire de 50 litros, 2HP, ideal para herramientas neumáticas.',
-          image: 'https://via.placeholder.com/300x180?text=Compresor+Aire',
-          status: 'available',
-          statusText: 'Disponible',
-          actions: [
-            { icon: 'fas fa-heart', class: 'btn-secondary' },
-            { icon: 'fas fa-shopping-cart', class: 'btn-primary', text: 'Alquilar' }
-          ]
-        })}
-        
-        ${createToolCard({
-          name: 'Generador Eléctrico 5000W',
-          category: 'Generadores',
-          price: '$75.00 / día',
-          description: 'Generador eléctrico de 5000W, ideal para obras sin acceso a electricidad.',
-          image: 'https://via.placeholder.com/300x180?text=Generador+Eléctrico',
-          status: 'available',
-          statusText: 'Disponible',
-          actions: [
-            { icon: 'fas fa-heart', class: 'btn-secondary' },
-            { icon: 'fas fa-shopping-cart', class: 'btn-primary', text: 'Alquilar' }
-          ]
-        })}
-      </div>
-    </div>
-  `;
+    `;
+  } catch (error) {
+    console.error('Error fetching client dashboard data:', error);
+    return `<div>Error al cargar los datos del dashboard.</div>`;
+  }
 }
 
-// Vista de Alquileres de Cliente
-function createClientRentalsView() {
-  return `
-    <div class="view client-view client-rentals-view hidden">
-      <div class="dashboard-header">
-        <div class="dashboard-title">Mis Alquileres</div>
-        <div class="action-buttons">
-          <button class="btn btn-secondary">
-            <i class="fas fa-filter"></i>
-            <span>Filtrar</span>
-          </button>
-          <button class="btn btn-primary">
-            <i class="fas fa-search"></i>
-            <span>Buscar Herramientas</span>
-          </button>
+// === Vista de Explorar Herramientas ===
+async function createClientExploreView() {
+  try {
+    const tools = await apiService.getHerramientas();
+
+    const toolCards = tools.map(tool => createToolCard({
+      nombre: tool.nombre,
+      marca: tool.marca,
+      modelo: tool.modelo,
+      categoria: tool.categoria,
+      costoPorDia: tool.costoPorDia,
+      cantidadDisponible: tool.cantidadDisponible,
+      activa: tool.activa,
+      imagenUrl: tool.imagenUrl
+    })).join('');
+
+    return `
+      <div class="view client-view client-explore-view hidden">
+        <div class="dashboard-header">
+          <div class="dashboard-title">Explorar Herramientas</div>
+          <div class="action-buttons">
+            <button class="btn btn-secondary">
+              <i class="fas fa-filter"></i>
+              <span>Filtrar</span>
+            </button>
+            <div class="search-box">
+              <i class="fas fa-search"></i>
+              <input type="text" placeholder="Buscar herramientas...">
+            </div>
+          </div>
+        </div>
+
+        <div class="tools-grid">
+          ${toolCards}
         </div>
       </div>
-      
-      ${createTable('Alquileres Activos', 
-        ['ID', 'Herramienta', 'Proveedor', 'Fecha Inicio', 'Fecha Fin', 'Monto', 'Estado', 'Acciones'], 
-        [
-          ['#12345', 'Taladro Industrial', 'Herramientas Pro', '15/05/2023', '18/05/2023', '$120.00', '<span class="status status-rented">En Alquiler</span>', '<i class="fas fa-eye action-icon"></i> <i class="fas fa-undo action-icon"></i>'],
-          ['#12344', 'Mezcladora de Concreto', 'Construmax', '14/05/2023', '20/05/2023', '$350.00', '<span class="status status-rented">En Alquiler</span>', '<i class="fas fa-eye action-icon"></i> <i class="fas fa-undo action-icon"></i>']
-        ], false)}
-      
-      ${createTable('Historial de Alquileres', 
-        ['ID', 'Herramienta', 'Proveedor', 'Fecha Inicio', 'Fecha Fin', 'Monto', 'Estado', 'Acciones'], 
-        [
-          ['#12343', 'Sierra Circular', 'Herramientas Pro', '10/05/2023', '15/05/2023', '$85.00', '<span class="status status-available">Completado</span>', '<i class="fas fa-eye action-icon"></i> <i class="fas fa-file-invoice action-icon"></i>'],
-          ['#12341', 'Compresor de Aire', 'Herramientas Pro', '05/05/2023', '10/05/2023', '$150.00', '<span class="status status-available">Completado</span>', '<i class="fas fa-eye action-icon"></i> <i class="fas fa-file-invoice action-icon"></i>']
-        ], false)}
-    </div>
-  `;
+    `;
+  } catch (error) {
+    console.error('Error fetching explore view:', error);
+    return `<div>Error al cargar las herramientas.</div>`;
+  }
 }
 
-// Vista de Pagos de Cliente
-function createClientPaymentsView() {
-  return `
-    <div class="view client-view client-payments-view hidden">
-      <div class="dashboard-header">
-        <div class="dashboard-title">Mis Pagos</div>
-        <div class="action-buttons">
-          <button class="btn btn-secondary">
-            <i class="fas fa-filter"></i>
-            <span>Filtrar</span>
-          </button>
-          <button class="btn btn-primary">
-            <i class="fas fa-download"></i>
-            <span>Exportar</span>
-          </button>
+// === Vista de Alquileres del Cliente ===
+async function createClientRentalsView() {
+  try {
+    const rentals = await apiService.getReservas();
+    const userRentals = rentals.filter(r => r.clienteId === 1); // Cambiar por ID real si es posible
+
+    const activeRentals = userRentals.filter(r => r.estado === 'En Alquiler');
+    const historyRentals = userRentals.filter(r => r.estado === 'Completado');
+
+    return `
+      <div class="view client-view client-rentals-view hidden">
+        <div class="dashboard-header">
+          <div class="dashboard-title">Mis Alquileres</div>
+          <div class="action-buttons">
+            <button class="btn btn-secondary">
+              <i class="fas fa-filter"></i>
+              <span>Filtrar</span>
+            </button>
+            <button class="btn btn-primary">
+              <i class="fas fa-search"></i>
+              <span>Buscar Herramientas</span>
+            </button>
+          </div>
         </div>
+
+        ${createTable('Alquileres Activos', 
+          ['ID', 'Herramienta', 'Proveedor', 'Fecha Inicio', 'Fecha Fin', 'Monto', 'Estado', 'Acciones'], 
+          activeRentals.map(rental => [
+            rental.id,
+            rental.herramienta?.nombre || 'Herramienta no disponible',
+            rental.proveedor?.nombre || 'Proveedor no encontrado',
+            rental.fechaInicio || 'No especificada',
+            rental.fechaFin || 'No especificada',
+            `$${parseFloat(rental.precio || 0).toFixed(2)}`,
+            `<span class="status status-rented">${rental.estado || 'En Alquiler'}</span>`,
+            '<i class="fas fa-eye action-icon"></i> <i class="fas fa-undo action-icon"></i>'
+          ])
+        )}
+
+        ${createTable('Historial de Alquileres', 
+          ['ID', 'Herramienta', 'Proveedor', 'Fecha Inicio', 'Fecha Fin', 'Monto', 'Estado', 'Acciones'], 
+          historyRentals.map(rental => [
+            rental.id,
+            rental.herramienta?.nombre || 'Herramienta no disponible',
+            rental.proveedor?.nombre || 'Proveedor no encontrado',
+            rental.fechaInicio || 'No especificada',
+            rental.fechaFin || 'No especificada',
+            `$${parseFloat(rental.precio || 0).toFixed(2)}`,
+            `<span class="status status-available">${rental.estado || 'Completado'}</span>`,
+            '<i class="fas fa-eye action-icon"></i> <i class="fas fa-file-invoice action-icon"></i>'
+          ])
+        )}
       </div>
-      
-      <div class="stats-container">
-        ${createStatCard('Total Pagado', '$1,245', 'fas fa-dollar-sign', '#2dce89', { text: 'Últimos 12 meses' })}
-        ${createStatCard('Pagos Pendientes', '$350', 'fas fa-file-invoice-dollar', '#fb6340', { text: 'Vence: 20/05/2023' })}
-        ${createStatCard('Método de Pago', 'Visa', 'fas fa-credit-card', '#5e72e4', { text: 'Termina en 4582' })}
-        ${createStatCard('Facturas', '12', 'fas fa-file-invoice', '#2dce89', { text: 'Disponibles para descarga' })}
-      </div>
-      
-      ${createTable('Historial de Pagos', 
-        ['ID Factura', 'Herramienta', 'Proveedor', 'Fecha', 'Monto', 'Estado', 'Acciones'], 
-        [
-          ['F-12343', 'Sierra Circular', 'Herramientas Pro', '15/05/2023', '$85.00', '<span class="status status-available">Pagada</span>', '<i class="fas fa-eye action-icon"></i> <i class="fas fa-download action-icon"></i>'],
-          ['F-12341', 'Compresor de Aire', 'Herramientas Pro', '10/05/2023', '$150.00', '<span class="status status-available">Pagada</span>', '<i class="fas fa-eye action-icon"></i> <i class="fas fa-download action-icon"></i>'],
-          ['F-12344', 'Mezcladora de Concreto', 'Construmax', 'Pendiente', '$350.00', '<span class="status status-rented">Pendiente</span>', '<i class="fas fa-eye action-icon"></i> <i class="fas fa-credit-card action-icon"></i>']
-        ])}
-    </div>
-  `;
+    `;
+  } catch (error) {
+    console.error('Error fetching rentals:', error);
+    return `<div>Error al cargar tus alquileres.</div>`;
+  }
 }
 
-// Función para crear todas las vistas de cliente
-function createClientViews() {
+// === Vista de Pagos del Cliente ===
+async function createClientPaymentsView() {
+  try {
+    const invoices = await apiService.getFacturas();
+    const userInvoices = invoices.filter(i => i.clienteId === 1);
+
+    const paidInvoices = userInvoices.filter(i => i.estado === 'Pagada');
+    const pendingInvoices = userInvoices.filter(i => i.estado === 'Pendiente');
+
+    const totalPaid = paidInvoices.reduce((sum, inv) => sum + parseFloat(inv.monto || 0), 0);
+    const pendingAmount = pendingInvoices.length > 0 ? parseFloat(pendingInvoices[0].monto || 0) : 0;
+
+    return `
+      <div class="view client-view client-payments-view hidden">
+        <div class="dashboard-header">
+          <div class="dashboard-title">Mis Pagos</div>
+          <div class="action-buttons">
+            <button class="btn btn-secondary">
+              <i class="fas fa-filter"></i>
+              <span>Filtrar</span>
+            </button>
+            <button class="btn btn-primary">
+              <i class="fas fa-download"></i>
+              <span>Exportar</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="stats-container">
+          ${createStatCard('Total Pagado', `$${totalPaid.toFixed(2)}`, 'fas fa-dollar-sign', '#2dce89', { text: 'Últimos 12 meses' })}
+          ${createStatCard('Pagos Pendientes', `$${pendingAmount.toFixed(2)}`, 'fas fa-file-invoice-dollar', '#f5365c', { text: 'Próximo vencimiento: 20/05/2023' })}
+          ${createStatCard('Método de Pago', 'Visa', 'fas fa-credit-card', '#5e72e4', { text: 'Termina en 4582' })}
+          ${createStatCard('Facturas Disponibles', userInvoices.length.toString(), 'fas fa-file-invoice', '#2dce89', { text: 'Descargables en PDF' })}
+        </div>
+
+        ${createTable('Historial de Pagos', 
+          ['ID Factura', 'Herramienta', 'Proveedor', 'Fecha', 'Monto', 'Estado', 'Acciones'], 
+          userInvoices.slice(0, 3).map(invoice => [
+            `F-${invoice.id}`,
+            invoice.reserva?.herramienta?.nombre || 'Herramienta no disponible',
+            invoice.reserva?.proveedor?.nombre || 'Proveedor no encontrado',
+            new Date().toLocaleDateString(),
+            `$${parseFloat(invoice.monto || 0).toFixed(2)}`,
+            `<span class="status status-${invoice.estado === 'Pagada' ? 'available' : 'rented'}">${invoice.estado || 'Desconocida'}</span>`,
+            '<i class="fas fa-eye action-icon"></i> <i class="fas fa-download action-icon"></i>'
+          ])
+        )}
+      </div>
+    `;
+  } catch (error) {
+    console.error('Error fetching payments:', error);
+    return `<div>Error al cargar tus pagos.</div>`;
+  }
+}
+
+// === Función principal para crear todas las vistas del cliente ===
+export async function createClientViews() {
   return `
-    ${createClientDashboardView()}
-    ${createClientExploreView()}
-    ${createClientRentalsView()}
-    ${createClientPaymentsView()}
+    ${await createClientDashboardView()}
+    ${await createClientExploreView()}
+    ${await createClientRentalsView()}
+    ${await createClientPaymentsView()}
   `;
 }

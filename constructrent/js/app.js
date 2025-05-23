@@ -1,4 +1,6 @@
 import { createAdminViews } from './roles/admin.js';
+import { createProviderViews } from './roles/provider.js'
+import { createClientViews } from './roles/client.js'
 import { createHeader,createNotificationsPanel } from './components/header.js';
 import { createSidebar } from './components/sidebar.js';
 import { createAddToolModal } from './components/modals.js';
@@ -57,9 +59,19 @@ function loadUserData() {
 }
 
 // Función para renderizar la aplicación
-function renderApp() {
+async function renderApp() {
   const appContainer = document.getElementById('app');
-  
+
+  let contentHTML = '';
+
+  if (appState.currentRole === 'admin') {
+    contentHTML = await createAdminViews();
+  } else if (appState.currentRole === 'provider') {
+    contentHTML = await createProviderViews();
+  } else if (appState.currentRole === 'client') {
+    contentHTML = await createClientViews();
+  }
+
   appContainer.innerHTML = `
     <div class="container">
       ${createHeader(appState.user)}
@@ -69,15 +81,15 @@ function renderApp() {
         ${createSidebar(appState.currentRole)}
         
         <div class="content">
-          ${appState.currentRole === 'admin' ? createAdminViews() : ''}
-          ${appState.currentRole === 'provider' ? createProviderViews() : ''}
-          ${appState.currentRole === 'client' ? createClientViews() : ''}
+          ${contentHTML}
         </div>
       </div>
       
       ${createAddToolModal()}
     </div>
   `;
+
+  setupEvents(); // Vuelve a configurar los eventos después de cargar el nuevo contenido
 }
 
 // Función para configurar eventos

@@ -43,9 +43,9 @@ export const apiService = {
     deleteCategoria: (id) => fetchApi(`/api/categorias/${id}`, { method: 'DELETE' }),
 
     // Facturas
-    //   getFacturas: () => fetchApi('/api/facturas'),
-    //   getFacturaById: (id) => fetchApi(`/api/facturas/${id}`),
-    //   generateFactura: (data) => fetchApi('/api/facturas/generate', { method: 'POST', body: JSON.stringify(data) }),
+    getFacturas: () => fetchApi('/api/facturas'),
+    getFacturaById: (id) => fetchApi(`/api/facturas/${id}`),
+    generateFactura: (data) => fetchApi('/api/facturas/generate', { method: 'POST', body: JSON.stringify(data) }),
 
     // Herramientas
     getHerramientas: () => fetchApi('/api/herramientas'),
@@ -63,11 +63,11 @@ export const apiService = {
     processPago: (data) => fetchApi('/api/pagos', { method: 'POST', body: JSON.stringify(data) }),
 
     // Proveedores
-    getProveedores: () => fetchApi('/api/consproveedores'),
-    getProveedorById: (id) => fetchApi(`/api/consproveedores/${id}`),
-    createProveedor: (data) => fetchApi('/api/consproveedores', { method: 'POST', body: JSON.stringify(data) }),
-    updateProveedor: (id, data) => fetchApi(`/api/consproveedores/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    deleteProveedor: (id) => fetchApi(`/api/consproveedores/${id}`, { method: 'DELETE' }),
+    getProveedores: () => fetchApi('/api/proveedores'),
+    getProveedorById: (id) => fetchApi(`/api/proveedores/${id}`),
+    createProveedor: (data) => fetchApi('/api/proveedores', { method: 'POST', body: JSON.stringify(data) }),
+    updateProveedor: (id, data) => fetchApi(`/api/proveedores/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteProveedor: (id) => fetchApi(`/api/proveedores/${id}`, { method: 'DELETE' }),
 
     // Reservas
     getReservas: () => fetchApi('/api/reservas'),
