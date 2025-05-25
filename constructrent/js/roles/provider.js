@@ -1,7 +1,6 @@
 import { apiService } from "../services/apiService.js"
 import { createStatCard } from "../components/cards.js"
 import { createTable } from "../components/tables.js"
-import { createEditToolModal } from "../components/modals.js"
 
 async function createProviderDashboardView() {
   try {
@@ -37,12 +36,14 @@ async function createProviderDashboardView() {
       rental.fechaInicio || "No especificada",
       rental.fechaFin || "No especificada",
       `<span class="status status-${rental.estado?.toLowerCase() || "unknown"}">${rental.estado || "Desconocido"}</span>`,
-      `<button class="btn-icon" onclick="aprobarReserva(${rental.id})" title="Aprobar">
-         <i class="fas fa-check-circle"></i>
-       </button>
-       <button class="btn-icon" onclick="rechazarReserva(${rental.id})" title="Rechazar">
-         <i class="fas fa-times-circle"></i>
-       </button>`,
+      `<div class="action-buttons-group">
+         <button class="btn-icon" onclick="aprobarReserva(${rental.id})" title="Aprobar">
+           <i class="fas fa-check-circle"></i>
+         </button>
+         <button class="btn-icon" onclick="rechazarReserva(${rental.id})" title="Rechazar">
+           <i class="fas fa-times-circle"></i>
+         </button>
+       </div>`,
     ])
 
     return `
@@ -104,7 +105,7 @@ async function createProviderToolsView() {
             <button class="btn btn-secondary" onclick="verDetallesHerramienta(${tool.id})">
               <i class="fas fa-eye"></i> Ver
             </button>
-            <button class="btn btn-primary" onclick="editarHerramienta(${tool.id})">
+            <button class="btn btn-primary" onclick="editarHerramientaModal(${tool.id})">
               <i class="fas fa-edit"></i> Editar
             </button>
             <button class="btn btn-danger" onclick="eliminarHerramienta(${tool.id})">
@@ -149,156 +150,105 @@ async function createProviderToolsView() {
   }
 }
 
-async function createProviderRentalsView() {
-  try {
-    const [rentals, tools] = await Promise.all([apiService.getReservas(), apiService.getHerramientas()])
-
-    const providerRentals = rentals.filter((r) => r.proveedorId === 1)
-
-    const pending = providerRentals.filter((r) => r.estado === "Pendiente").length
-    const active = providerRentals.filter((r) => r.estado === "En Alquiler").length
-    const completed = providerRentals.filter((r) => r.estado === "Completado").length
-
-    const rentalRows = providerRentals.slice(0, 5).map((rental) => {
-      const tool = tools.find((t) => t.id === rental.herramientaId) || { nombre: "Herramienta no encontrada" }
-      return [
-        rental.id,
-        rental.cliente?.nombre || "Cliente no disponible",
-        tool.nombre,
-        new Date().toLocaleDateString(),
-        rental.fechaInicio || "No especificada",
-        rental.fechaFin || "No especificada",
-        `<span class="status status-${rental.estado?.toLowerCase() || "unknown"}">${rental.estado || "Desconocido"}</span>`,
-        `<button class="btn-icon" onclick="aprobarReserva(${rental.id})" title="Aprobar">
-           <i class="fas fa-check-circle"></i>
-         </button>
-         <button class="btn-icon" onclick="rechazarReserva(${rental.id})" title="Rechazar">
-           <i class="fas fa-times-circle"></i>
-         </button>
-         <button class="btn-icon" onclick="abrirModalFactura(${rental.id})" title="Generar factura">
-           <i class="fas fa-file-invoice"></i>
-         </button>`,
-      ]
-    })
-
-    return `
-      <div class="view provider-view provider-rentals-view hidden">
-        <div class="dashboard-header">
-          <div class="dashboard-title">Gestión de Reservas</div>
-          <div class="action-buttons">
-            <button class="btn btn-secondary" onclick="filtrarReservas()">
-              <i class="fas fa-filter"></i>
-              <span>Filtrar</span>
-            </button>
-            <button class="btn btn-primary" onclick="exportarReservas()">
-              <i class="fas fa-download"></i>
-              <span>Exportar</span>
-            </button>
+async function createProviderSettingsView() {
+  return `
+    <div class="view provider-view provider-settings-view hidden">
+      <div class="dashboard-header">
+        <div class="dashboard-title">Configuración de Proveedor</div>
+        <div class="action-buttons">
+          <button class="btn btn-secondary" onclick="exportarConfiguracion()">
+            <i class="fas fa-download"></i>
+            <span>Exportar</span>
+          </button>
+          <button class="btn btn-primary" onclick="guardarConfiguracionProveedor()">
+            <i class="fas fa-save"></i>
+            <span>Guardar</span>
+          </button>
+        </div>
+      </div>
+      
+      <div class="settings-container">
+        <div class="settings-section">
+          <h3>Información del Negocio</h3>
+          <div class="form-group">
+            <label class="form-label">Nombre del Negocio</label>
+            <input type="text" class="form-control" value="Mi Empresa de Herramientas" id="businessName">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Descripción</label>
+            <textarea class="form-control" id="businessDescription">Proveedor de herramientas de construcción de alta calidad</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Dirección del Negocio</label>
+            <input type="text" class="form-control" value="Calle 123 #45-67" id="businessAddress">
           </div>
         </div>
-        <div class="stats-container">
-          ${createStatCard("Solicitudes Nuevas", pending.toString(), "fas fa-bell", "#5e72e4", { type: "positive", icon: "fas fa-arrow-up", text: "3 más que ayer" })}
-          ${createStatCard("Alquileres Activos", active.toString(), "fas fa-clipboard-list", "#fb6340", { type: "positive", icon: "fas fa-arrow-up", text: "5 más que ayer" })}
-          ${createStatCard("Completados", completed.toString(), "fas fa-check-circle", "#2dce89", { text: "Total completados" })}
-          ${createStatCard("Reportes Pendientes", "0", "fas fa-exclamation-triangle", "#f5365c", { type: "negative", icon: "fas fa-arrow-up", text: "0 nuevos" })}
-        </div>
-        ${createTable("Solicitudes de Alquiler", ["ID", "Cliente", "Herramienta", "Fecha Solicitud", "Fecha Inicio", "Fecha Fin", "Estado", "Acciones"], rentalRows)}
-      </div>
-    `
-  } catch (error) {
-    console.error("Error fetching rentals:", error)
-    return `<div class="error-message">Error al cargar las reservas.</div>`
-  }
-}
 
-async function createProviderBillingView() {
-  try {
-    const [rentals, facturas] = await Promise.all([apiService.getReservas(), apiService.getFacturas()])
-
-    const providerRentals = rentals.filter((r) => r.proveedorId === 1)
-    const totalIncome = providerRentals.reduce((sum, r) => sum + Number.parseFloat(r.precio || 0), 0)
-    const monthlyIncome = totalIncome * 0.08
-
-    const invoiceRows = facturas.slice(0, 5).map((factura) => [
-      `F-${factura.id}`,
-      factura.reserva?.cliente?.nombre || "Cliente no disponible",
-      factura.fechaEmision || new Date().toLocaleDateString(),
-      factura.reserva?.herramienta?.nombre || "Herramienta no disponible",
-      `$${Number.parseFloat(factura.monto || 0).toFixed(2)}`,
-      `<span class="status status-${factura.estado?.toLowerCase() || "pendiente"}">${factura.estado || "Pendiente"}</span>`,
-      `<button class="btn-icon" onclick="verFactura(${factura.id})" title="Ver factura">
-         <i class="fas fa-eye"></i>
-       </button>
-       <button class="btn-icon" onclick="descargarFactura(${factura.id})" title="Descargar">
-         <i class="fas fa-download"></i>
-       </button>`,
-    ])
-
-    return `
-      <div class="view provider-view provider-billing-view hidden">
-        <div class="dashboard-header">
-          <div class="dashboard-title">Facturación</div>
-          <div class="action-buttons">
-            <button class="btn btn-secondary" onclick="filtrarFacturas()">
-              <i class="fas fa-filter"></i>
-              <span>Filtrar</span>
-            </button>
-            <button class="btn btn-primary" onclick="exportarFacturas()">
-              <i class="fas fa-download"></i>
-              <span>Exportar</span>
-            </button>
+        <div class="settings-section">
+          <h3>Configuración de Precios</h3>
+          <div class="form-group">
+            <label class="form-label">Descuento por Volumen (%)</label>
+            <input type="number" class="form-control" value="5" min="0" max="50" id="volumeDiscount">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Precio Mínimo por Día</label>
+            <input type="number" class="form-control" value="10" min="1" id="minimumPrice">
           </div>
         </div>
-        <div class="stats-container">
-          ${createStatCard("Ingresos Totales", `$${totalIncome.toFixed(2)}`, "fas fa-dollar-sign", "#2dce89", { type: "positive", icon: "fas fa-arrow-up", text: "12% desde el año pasado" })}
-          ${createStatCard("Ingresos Mensuales", `$${monthlyIncome.toFixed(2)}`, "fas fa-chart-line", "#2dce89", { type: "positive", icon: "fas fa-arrow-up", text: "8% desde el mes pasado" })}
-          ${createStatCard("Facturas Pendientes", facturas.filter((f) => f.estado === "Pendiente").length.toString(), "fas fa-file-invoice-dollar", "#fb6340", { text: "Por cobrar" })}
-          ${createStatCard("Comisión Plataforma", `$${(monthlyIncome * 0.1).toFixed(2)}`, "fas fa-percentage", "#5e72e4", { text: "10% de los ingresos" })}
+
+        <div class="settings-section">
+          <h3>Horarios de Atención</h3>
+          <div class="form-group">
+            <label class="form-label">Lunes a Viernes</label>
+            <div class="time-range">
+              <input type="time" class="form-control" value="08:00" id="weekdayStart">
+              <span>a</span>
+              <input type="time" class="form-control" value="18:00" id="weekdayEnd">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sábados</label>
+            <div class="time-range">
+              <input type="time" class="form-control" value="09:00" id="saturdayStart">
+              <span>a</span>
+              <input type="time" class="form-control" value="15:00" id="saturdayEnd">
+            </div>
+          </div>
+          <div class="form-group">
+            <label><input type="checkbox" id="sundayOpen"> Abierto los domingos</label>
+          </div>
         </div>
-        ${createTable("Facturas Recientes", ["ID Factura", "Cliente", "Fecha", "Herramienta", "Monto", "Estado", "Acciones"], invoiceRows)}
+
+        <div class="settings-section">
+          <h3>Políticas de Alquiler</h3>
+          <div class="form-group">
+            <label class="form-label">Tiempo Mínimo de Alquiler (días)</label>
+            <input type="number" class="form-control" value="1" min="1" id="minimumRentalDays">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Depósito de Seguridad (%)</label>
+            <input type="number" class="form-control" value="20" min="0" max="100" id="securityDeposit">
+          </div>
+        </div>
       </div>
-    `
-  } catch (error) {
-    console.error("Error fetching billing data:", error)
-    return `<div class="error-message">Error al cargar la facturación.</div>`
-  }
+    </div>
+  `
 }
 
 // Funciones globales para el proveedor
-window.editarHerramienta = async (herramientaId) => {
-  try {
-    const herramienta = await apiService.getHerramientaById(herramientaId)
-    const modal = createEditToolModal(herramienta)
-    document.body.insertAdjacentHTML("beforeend", modal)
-  } catch (e) {
-    console.error("Error al cargar herramienta para editar:", e)
-    alert("No se pudo cargar la herramienta para editar.")
-  }
-}
-
-window.eliminarHerramienta = async (herramientaId) => {
-  if (confirm("¿Estás seguro de que quieres eliminar esta herramienta?")) {
-    try {
-      await apiService.deleteHerramienta(herramientaId)
-      alert("Herramienta eliminada correctamente.")
-      location.reload()
-    } catch (e) {
-      console.error("Error al eliminar herramienta:", e)
-      alert("No se pudo eliminar la herramienta.")
-    }
-  }
-}
-
 window.aprobarReserva = async (reservaId) => {
   try {
     const reserva = await apiService.getReservaById(reservaId)
-    reserva.estado = "Aprobada"
-    await apiService.updateReserva(reservaId, reserva)
+    const reservaActualizada = {
+      ...reserva,
+      estado: "Aprobada",
+    }
+    await apiService.updateReserva(reservaId, reservaActualizada)
     alert("Reserva aprobada correctamente.")
     location.reload()
   } catch (err) {
     console.error("Error al aprobar reserva:", err)
-    alert("No se pudo aprobar la reserva.")
+    alert(`No se pudo aprobar la reserva: ${err.message}`)
   }
 }
 
@@ -306,51 +256,24 @@ window.rechazarReserva = async (reservaId) => {
   if (confirm("¿Estás seguro de que quieres rechazar esta reserva?")) {
     try {
       const reserva = await apiService.getReservaById(reservaId)
-      reserva.estado = "Rechazada"
-      await apiService.updateReserva(reservaId, reserva)
+      const reservaActualizada = {
+        ...reserva,
+        estado: "Rechazada",
+      }
+      await apiService.updateReserva(reservaId, reservaActualizada)
       alert("Reserva rechazada.")
       location.reload()
     } catch (err) {
       console.error("Error al rechazar reserva:", err)
-      alert("No se pudo rechazar la reserva.")
+      alert(`No se pudo rechazar la reserva: ${err.message}`)
     }
   }
 }
 
-window.verFactura = async (facturaId) => {
-  try {
-    const factura = await apiService.getFacturaById(facturaId)
-    const modalHtml = `
-      <div class="modal-overlay show" id="facturaDetallesModal">
-        <div class="modal">
-          <div class="modal-header">
-            <div class="modal-title">Factura #${factura.id}</div>
-            <button class="modal-close" onclick="document.getElementById('facturaDetallesModal').remove()">&times;</button>
-          </div>
-          <div class="modal-body">
-            <p><strong>Monto:</strong> $${Number.parseFloat(factura.monto || 0).toFixed(2)}</p>
-            <p><strong>Estado:</strong> ${factura.estado}</p>
-            <p><strong>Fecha de emisión:</strong> ${factura.fechaEmision}</p>
-            <p><strong>Reserva ID:</strong> ${factura.reservaId}</p>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="document.getElementById('facturaDetallesModal').remove()">Cerrar</button>
-          </div>
-        </div>
-      </div>
-    `
-    document.body.insertAdjacentHTML("beforeend", modalHtml)
-  } catch (err) {
-    console.error("Error al cargar factura:", err)
-    alert("No se pudo cargar la factura.")
-  }
-}
-
 export async function createProviderViews() {
-  return `
-    ${await createProviderDashboardView()}
-    ${await createProviderToolsView()}
-    ${await createProviderRentalsView()}
-    ${await createProviderBillingView()}
-  `
+  const dashboard = await createProviderDashboardView()
+  const tools = await createProviderToolsView()
+  const settings = await createProviderSettingsView()
+
+  return `${dashboard}${tools}${settings}`
 }

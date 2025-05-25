@@ -1,88 +1,303 @@
 const API_BASE_URL = "http://localhost:8080"
 
-async function fetchApi(endpoint, options = {}) {
-  try {
-    const token = localStorage.getItem("authToken")
+class ApiService {
+  constructor() {
+    this.baseURL = API_BASE_URL
+  }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
+  getAuthToken() {
+    return localStorage.getItem("authToken") || localStorage.getItem("token")
+  }
+
+  async fetchApi(endpoint, options = {}) {
+    const url = `${this.baseURL}${endpoint}`
+    const token = this.getAuthToken()
+
+    const defaultOptions = {
       headers: {
         "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...options.headers,
+        Accept: "application/json",
       },
+    }
+
+    // Agregar token de autorización si existe
+    if (token) {
+      defaultOptions.headers.Authorization = `Bearer ${token}`
+    }
+
+    const config = { ...defaultOptions, ...options }
+
+    // Merge headers properly
+    if (options.headers) {
+      config.headers = { ...defaultOptions.headers, ...options.headers }
+    }
+
+    try {
+      console.log(`Making ${config.method || "GET"} request to:`, url)
+      console.log("Headers:", config.headers)
+
+      if (config.body) {
+        console.log("Request body:", config.body)
+      }
+
+      const response = await fetch(url, config)
+
+      console.log(`Response status: ${response.status}`)
+
+      // Manejar error 401 - token expirado o inválido
+      if (response.status === 401) {
+        console.error("Token inválido o expirado, redirigiendo al login")
+        localStorage.clear()
+        window.location.href = "login.html"
+        return
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error(`HTTP error! status: ${response.status}, body: ${errorText}`)
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      // Handle empty responses (like 204 No Content)
+      if (response.status === 204) {
+        return { success: true }
+      }
+
+      // Handle responses with content
+      const contentType = response.headers.get("content-type")
+      if (contentType && contentType.includes("application/json")) {
+        const data = await response.json()
+        console.log("Response data:", data)
+        return data
+      } else {
+        const text = await response.text()
+        return text || { success: true }
+      }
+    } catch (error) {
+      console.error(`Error fetching ${endpoint}:`, error)
+      throw error
+    }
+  }
+
+  // ============ AUTENTICACIÓN ============
+  async login(credentials) {
+    try {
+      const response = await fetch(`${this.baseURL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(credentials),
+      })
+
+      if (!response.ok) {
+        throw new Error("Credenciales inválidas")
+      }
+
+      const data = await response.json()
+
+      // Guardar token y datos del usuario
+      if (data.token) {
+        localStorage.setItem("authToken", data.token)
+        localStorage.setItem("isAuthenticated", "true")
+
+        if (data.usuario) {
+          localStorage.setItem("userData", JSON.stringify(data.usuario))
+          localStorage.setItem("userRole", data.usuario.rol?.toLowerCase() || "client")
+        }
+      }
+
+      return data
+    } catch (error) {
+      console.error("Error en login:", error)
+      throw error
+    }
+  }
+
+  async register(userData) {
+    return fetch(`${this.baseURL}/auth/registro`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(userData),
+    }).then((response) => {
+      if (!response.ok) {
+        throw new Error("Error en el registro")
+      }
+      return response.json()
     })
+  }
 
-    if (!response.ok) {
-      const text = await response.text()
-      throw new Error(`HTTP error! status: ${response.status}, body: ${text}`)
+  // ============ USUARIOS ============
+  async getUsuarios() {
+    return this.fetchApi("/api/usuarios")
+  }
+
+  async getUsuarioById(id) {
+    return this.fetchApi(`/api/usuarios/${id}`)
+  }
+
+  async createUsuario(usuario) {
+    return this.fetchApi("/api/usuarios", {
+      method: "POST",
+      body: JSON.stringify(usuario),
+    })
+  }
+
+  async updateUsuario(id, usuario) {
+    return this.fetchApi(`/api/usuarios/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(usuario),
+    })
+  }
+
+  async changeUserStatus(id, activo) {
+    return this.fetchApi(`/api/usuarios/${id}/estado`, {
+      method: "PATCH",
+      body: JSON.stringify(activo),
+    })
+  }
+
+  async deleteUsuario(id) {
+    return this.fetchApi(`/api/usuarios/${id}`, {
+      method: "DELETE",
+    })
+  }
+
+  // ============ HERRAMIENTAS ============
+  async getHerramientas() {
+    return this.fetchApi("/api/herramientas")
+  }
+
+  async getHerramientaById(id) {
+    return this.fetchApi(`/api/herramientas/${id}`)
+  }
+
+  async createHerramienta(herramienta) {
+    return this.fetchApi("/api/herramientas", {
+      method: "POST",
+      body: JSON.stringify(herramienta),
+    })
+  }
+
+  async updateHerramienta(id, herramienta) {
+    return this.fetchApi(`/api/herramientas/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(herramienta),
+    })
+  }
+
+  async deleteHerramienta(id) {
+    return this.fetchApi(`/api/herramientas/${id}`, {
+      method: "DELETE",
+    })
+  }
+
+  // ============ RESERVAS ============
+  async getReservas() {
+    return this.fetchApi("/api/reservas")
+  }
+
+  async getReservaById(id) {
+    return this.fetchApi(`/api/reservas/${id}`)
+  }
+
+  async createReserva(reserva) {
+    return this.fetchApi("/api/reservas", {
+      method: "POST",
+      body: JSON.stringify(reserva),
+    })
+  }
+
+  async updateReserva(id, reservaData) {
+    const updateDto = {
+      fechaInicio: reservaData.fechaInicio,
+      fechaFin: reservaData.fechaFin,
+      estado: reservaData.estado,
+      monto: reservaData.monto,
+      costoTotal: reservaData.costoTotal,
     }
 
-    const contentType = response.headers.get("content-type")
-    if (!contentType || !contentType.includes("application/json")) {
-      const text = await response.text()
-      throw new Error("La respuesta no es JSON válido: " + text)
-    }
+    return this.fetchApi(`/api/reservas/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(updateDto),
+    })
+  }
 
-    return await response.json()
-  } catch (error) {
-    console.error(`Error fetching ${endpoint}:`, error.message)
-    throw error
+  async deleteReserva(id) {
+    return this.fetchApi(`/api/reservas/${id}`, {
+      method: "DELETE",
+    })
+  }
+
+  // ============ FACTURAS ============
+  async getFacturas() {
+    return this.fetchApi("/api/facturas")
+  }
+
+  async getFacturaById(id) {
+    return this.fetchApi(`/api/facturas/${id}`)
+  }
+
+  async createFactura(factura) {
+    return this.fetchApi("/api/facturas", {
+      method: "POST",
+      body: JSON.stringify(factura),
+    })
+  }
+
+  async generateFactura(facturaData) {
+    return this.fetchApi("/api/facturas/generate", {
+      method: "POST",
+      body: JSON.stringify(facturaData),
+    })
+  }
+
+  // ============ CATEGORIAS ============
+  async getCategorias() {
+    return this.fetchApi("/api/categorias")
+  }
+
+  async getCategoriaById(id) {
+    return this.fetchApi(`/api/categorias/${id}`)
+  }
+
+  // ============ PROVEEDORES ============
+  async getProveedores() {
+    return this.fetchApi("/api/proveedores")
+  }
+
+  async getProveedorById(id) {
+    return this.fetchApi(`/api/proveedores/${id}`)
+  }
+
+  // ============ NOTIFICACIONES ============
+  async getNotificaciones() {
+    return this.fetchApi("/api/notificaciones/todas")
+  }
+
+  async getNotificacionById(id) {
+    return this.fetchApi(`/api/notificaciones/${id}`)
+  }
+
+  // ============ PAGOS ============
+  async getPagos() {
+    return this.fetchApi("/pagos")
+  }
+
+  async getPagoById(id) {
+    return this.fetchApi(`/pagos/${id}`)
+  }
+
+  async createPago(pago) {
+    return this.fetchApi("/pagos", {
+      method: "POST",
+      body: JSON.stringify(pago),
+    })
   }
 }
 
-export const apiService = {
-  // Autenticación
-  login: (data) => fetchApi("/auth/login", { method: "POST", body: JSON.stringify(data) }),
-  register: (data) => fetchApi("/auth/registro", { method: "POST", body: JSON.stringify(data) }),
-
-  // Categorías
-  getCategorias: () => fetchApi("/api/categorias"),
-  createCategoria: (data) => fetchApi("/api/categorias", { method: "POST", body: JSON.stringify(data) }),
-  updateCategoria: (id, data) => fetchApi(`/api/categorias/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-  deleteCategoria: (id) => fetchApi(`/api/categorias/${id}`, { method: "DELETE" }),
-
-  // Facturas
-  getFacturas: () => fetchApi("/api/facturas"),
-  getFacturaById: (id) => fetchApi(`/api/facturas/${id}`),
-  generateFactura: (data) => fetchApi("/api/facturas/generate", { method: "POST", body: JSON.stringify(data) }),
-  createFactura: (data) => fetchApi("/api/facturas", { method: "POST", body: JSON.stringify(data) }),
-
-  // Herramientas
-  getHerramientas: () => fetchApi("/api/herramientas"),
-  getHerramientaById: (id) => fetchApi(`/api/herramientas/${id}`),
-  createHerramienta: (data) => fetchApi("/api/herramientas", { method: "POST", body: JSON.stringify(data) }),
-  updateHerramienta: (id, data) => fetchApi(`/api/herramientas/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-  deleteHerramienta: (id) => fetchApi(`/api/herramientas/${id}`, { method: "DELETE" }),
-
-  // Notificaciones
-  getNotificaciones: () => fetchApi("/api/notificaciones"),
-  markAsRead: (id) => fetchApi(`/api/notificaciones/${id}/read`, { method: "PUT" }),
-
-  // Pagos
-  getPagos: () => fetchApi("/api/pagos"),
-  processPago: (data) => fetchApi("/api/pagos", { method: "POST", body: JSON.stringify(data) }),
-
-  // Proveedores
-  getProveedores: () => fetchApi("/api/proveedores"),
-  getProveedorById: (id) => fetchApi(`/api/proveedores/${id}`),
-  createProveedor: (data) => fetchApi("/api/proveedores", { method: "POST", body: JSON.stringify(data) }),
-  updateProveedor: (id, data) => fetchApi(`/api/proveedores/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-  deleteProveedor: (id) => fetchApi(`/api/proveedores/${id}`, { method: "DELETE" }),
-
-  // Reservas
-  getReservas: () => fetchApi("/api/reservas"),
-  getReservaById: (id) => fetchApi(`/api/reservas/${id}`),
-  createReserva: (data) => fetchApi("/api/reservas", { method: "POST", body: JSON.stringify(data) }),
-  updateReserva: (id, data) => fetchApi(`/api/reservas/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-  cancelReserva: (id) => fetchApi(`/api/reservas/${id}/cancel`, { method: "PUT" }),
-
-  // Usuarios
-  getUsuarios: () => fetchApi("/api/usuarios"),
-  getUsuarioById: (id) => fetchApi(`/api/usuarios/${id}`),
-  createUsuario: (data) => fetchApi("/api/usuarios", { method: "POST", body: JSON.stringify(data) }),
-  updateUsuario: (id, data) => fetchApi(`/api/usuarios/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-  deleteUsuario: (id) => fetchApi(`/api/usuarios/${id}`, { method: "DELETE" }),
-  changeUserStatus: (id, active) =>
-    fetchApi(`/api/usuarios/${id}/status`, { method: "PUT", body: JSON.stringify({ active }) }),
-}
+export const apiService = new ApiService()

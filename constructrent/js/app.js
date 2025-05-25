@@ -18,11 +18,18 @@ const appState = {
 }
 
 function initApp() {
-  // Verificar autenticación
-  if (!localStorage.getItem("isAuthenticated")) {
+  // Verificar autenticación más robusta
+  const isAuthenticated = localStorage.getItem("isAuthenticated")
+  const token = localStorage.getItem("authToken") || localStorage.getItem("token")
+
+  if (!isAuthenticated || !token) {
+    console.log("No hay autenticación válida, redirigiendo al login")
+    localStorage.clear()
     window.location.href = "login.html"
     return
   }
+
+  console.log("Usuario autenticado, cargando aplicación...")
 
   // Cargar datos del usuario
   loadUserData()
@@ -34,6 +41,7 @@ function initApp() {
 
   // Establecer rol actual
   appState.currentRole = roleParam || storedRole || "client"
+  console.log("Rol actual:", appState.currentRole)
 
   // Renderizar la aplicación
   renderApp()
@@ -62,12 +70,26 @@ async function renderApp() {
 
   let contentHTML = ""
 
-  if (appState.currentRole === "admin") {
-    contentHTML = await createAdminViews()
-  } else if (appState.currentRole === "provider") {
-    contentHTML = await createProviderViews()
-  } else if (appState.currentRole === "client") {
-    contentHTML = await createClientViews()
+  try {
+    if (appState.currentRole === "admin") {
+      contentHTML = await createAdminViews()
+    } else if (appState.currentRole === "provider") {
+      contentHTML = await createProviderViews()
+    } else if (appState.currentRole === "client") {
+      contentHTML = await createClientViews()
+    } else {
+      // Fallback por defecto
+      contentHTML = await createClientViews()
+    }
+  } catch (error) {
+    console.error("Error loading views:", error)
+    contentHTML = `
+      <div class="error-message">
+        <h3>Error al cargar la aplicación</h3>
+        <p>Hubo un problema cargando el contenido. Por favor, recarga la página.</p>
+        <button class="btn btn-primary" onclick="location.reload()">Recargar</button>
+      </div>
+    `
   }
 
   appContainer.innerHTML = `
@@ -193,16 +215,36 @@ function setupModalEvents() {
 // Funciones globales para manejar herramientas
 window.guardarHerramienta = async () => {
   const form = document.getElementById("addToolForm")
+  if (!form) {
+    alert("Formulario no encontrado")
+    return
+  }
+
   const formData = new FormData(form)
 
+  // Validaciones
+  const nombre = formData.get("nombre")
+  const categoria = formData.get("categoria")
+  const costoPorDia = formData.get("costoPorDia")
+
+  if (!nombre || !categoria || !costoPorDia) {
+    alert("Por favor completa todos los campos requeridos")
+    return
+  }
+
+  if (Number.parseFloat(costoPorDia) <= 0) {
+    alert("El precio por día debe ser mayor a 0")
+    return
+  }
+
   const herramienta = {
-    nombre: formData.get("nombre"),
-    categoria: formData.get("categoria"),
-    costoPorDia: Number.parseFloat(formData.get("costoPorDia")),
-    marca: formData.get("marca"),
-    modelo: formData.get("modelo"),
-    descripcion: formData.get("descripcion"),
-    cantidadDisponible: Number.parseInt(formData.get("cantidadDisponible")),
+    nombre: nombre.trim(),
+    categoria: categoria,
+    costoPorDia: Number.parseFloat(costoPorDia),
+    marca: formData.get("marca")?.trim() || "",
+    modelo: formData.get("modelo")?.trim() || "",
+    descripcion: formData.get("descripcion")?.trim() || "",
+    cantidadDisponible: Number.parseInt(formData.get("cantidadDisponible")) || 1,
     activa: formData.get("activa") === "true",
     proveedorId: 1, // Cambiar por ID del proveedor logueado
   }
@@ -210,27 +252,49 @@ window.guardarHerramienta = async () => {
   try {
     await apiService.createHerramienta(herramienta)
     alert("Herramienta agregada correctamente.")
-    document.getElementById("addToolModal").classList.remove("show")
+
+    // Cerrar modal y limpiar formulario
+    const modal = document.getElementById("addToolModal")
+    if (modal) {
+      modal.classList.remove("show")
+      form.reset()
+    }
+
     location.reload()
   } catch (error) {
     console.error("Error al guardar herramienta:", error)
-    alert("Error al guardar la herramienta.")
+    alert(`Error al guardar la herramienta: ${error.message}`)
   }
 }
 
 window.actualizarHerramienta = async () => {
   const form = document.getElementById("editToolForm")
+  if (!form) {
+    alert("Formulario no encontrado")
+    return
+  }
+
   const formData = new FormData(form)
+
+  // Validar datos requeridos
+  const nombre = formData.get("nombre")
+  const categoria = formData.get("categoria")
+  const costoPorDia = formData.get("costoPorDia")
+
+  if (!nombre || !categoria || !costoPorDia) {
+    alert("Por favor completa todos los campos requeridos")
+    return
+  }
 
   const herramienta = {
     id: Number.parseInt(formData.get("id")),
-    nombre: formData.get("nombre"),
-    categoria: formData.get("categoria"),
-    costoPorDia: Number.parseFloat(formData.get("costoPorDia")),
-    marca: formData.get("marca"),
-    modelo: formData.get("modelo"),
-    descripcion: formData.get("descripcion"),
-    cantidadDisponible: Number.parseInt(formData.get("cantidadDisponible")),
+    nombre: nombre.trim(),
+    categoria: categoria,
+    costoPorDia: Number.parseFloat(costoPorDia),
+    marca: formData.get("marca")?.trim() || "",
+    modelo: formData.get("modelo")?.trim() || "",
+    descripcion: formData.get("descripcion")?.trim() || "",
+    cantidadDisponible: Number.parseInt(formData.get("cantidadDisponible")) || 1,
     activa: formData.get("activa") === "true",
     proveedorId: 1,
   }
@@ -238,11 +302,15 @@ window.actualizarHerramienta = async () => {
   try {
     await apiService.updateHerramienta(herramienta.id, herramienta)
     alert("Herramienta actualizada correctamente.")
-    document.getElementById("editToolModal").remove()
+
+    // Cerrar modal
+    const modal = document.getElementById("editToolModal")
+    if (modal) modal.remove()
+
     location.reload()
   } catch (error) {
     console.error("Error al actualizar herramienta:", error)
-    alert("Error al actualizar la herramienta.")
+    alert(`Error al actualizar la herramienta: ${error.message}`)
   }
 }
 
@@ -254,91 +322,88 @@ window.abrirModalFactura = (reservaId) => {
 
 window.crearFactura = async (reservaId) => {
   const form = document.getElementById("facturaForm")
+  if (!form) {
+    alert("Formulario no encontrado")
+    return
+  }
+
   const formData = new FormData(form)
+  const monto = formData.get("monto")
+  const fechaEmision = formData.get("fechaEmision")
+  const estado = formData.get("estado")
+
+  // Validaciones
+  if (!monto || Number.parseFloat(monto) <= 0) {
+    alert("Por favor ingresa un monto válido")
+    return
+  }
+
+  if (!fechaEmision) {
+    alert("Por favor selecciona una fecha de emisión")
+    return
+  }
 
   const factura = {
-    monto: Number.parseFloat(formData.get("monto")),
-    fechaEmision: formData.get("fechaEmision"),
-    estado: formData.get("estado"),
+    monto: Number.parseFloat(monto),
+    fechaEmision: fechaEmision,
+    estado: estado || "Pendiente",
     reservaId: reservaId,
   }
 
   try {
-    await apiService.generateFactura(factura)
+    await apiService.createFactura(factura)
     alert("Factura creada exitosamente")
-    document.getElementById("facturaModal").remove()
+
+    // Cerrar modal
+    const modal = document.getElementById("facturaModal")
+    if (modal) modal.remove()
+
     location.reload()
   } catch (error) {
     console.error("Error creando factura:", error)
-    alert("Error al crear la factura.")
+    alert(`Error al crear la factura: ${error.message}`)
   }
 }
 
-// Función para exportar facturas
-window.exportarFacturas = async () => {
-  try {
-    const facturas = await apiService.getFacturas()
-
-    const csv = [
-      ["ID", "Monto", "Estado", "Fecha Emisión", "ID Reserva"],
-      ...facturas.map((f) => [
-        f.id || "",
-        f.monto ? `$${Number.parseFloat(f.monto).toFixed(2)}` : "$0.00",
-        f.estado || "Desconocido",
-        f.fechaEmision || "",
-        f.reservaId || "",
-      ]),
-    ]
-      .map((row) => row.join(","))
-      .join("\n")
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-
-    const link = document.createElement("a")
-    link.href = url
-    link.setAttribute("download", "facturas.csv")
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  } catch (error) {
-    console.error("Error exportando facturas:", error)
-    alert("No se pudieron exportar las facturas.")
+// CORREGIDO: Función para actualizar reserva con estructura completa
+window.actualizarReserva = async () => {
+  const form = document.getElementById("editReservaForm")
+  if (!form) {
+    alert("Formulario no encontrado")
+    return
   }
-}
 
-// Funciones globales para reservas
-window.verDetallesReserva = async (reservaId) => {
+  const formData = new FormData(form)
+  const id = Number.parseInt(formData.get("id"))
+
+  // Validar fechas
+  const fechaInicio = formData.get("fechaInicio")
+  const fechaFin = formData.get("fechaFin")
+
+  if (!fechaInicio || !fechaFin) {
+    alert("Por favor completa todas las fechas")
+    return
+  }
+
+  if (new Date(fechaInicio) >= new Date(fechaFin)) {
+    alert("La fecha de fin debe ser posterior a la fecha de inicio")
+    return
+  }
+
+  const reservaData = {
+    fechaInicio: fechaInicio,
+    fechaFin: fechaFin,
+    estado: formData.get("estado"),
+  }
+
   try {
-    const reserva = await apiService.getReservaById(reservaId)
-
-    const modalHtml = `
-      <div class="modal-overlay" id="reservaDetallesModal">
-        <div class="modal">
-          <div class="modal-header">
-            <div class="modal-title">Detalles de la Reserva #${reserva.id}</div>
-            <button class="modal-close" onclick="document.getElementById('reservaDetallesModal').remove()">&times;</button>
-          </div>
-          <div class="modal-body">
-            <p><strong>Cliente:</strong> ${reserva.cliente?.nombre || "No disponible"}</p>
-            <p><strong>Herramienta:</strong> ${reserva.herramienta?.nombre || "No disponible"}</p>
-            <p><strong>Fecha inicio:</strong> ${reserva.fechaInicio}</p>
-            <p><strong>Fecha fin:</strong> ${reserva.fechaFin}</p>
-            <p><strong>Estado:</strong> ${reserva.estado}</p>
-            <p><strong>Monto:</strong> $${reserva.monto?.toFixed(2) || "0.00"}</p>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="document.getElementById('reservaDetallesModal').remove()">Cerrar</button>
-            <button class="btn btn-primary" onclick="abrirModalFactura(${reserva.id})">Generar Factura</button>
-          </div>
-        </div>
-      </div>
-    `
-
-    document.body.insertAdjacentHTML("beforeend", modalHtml)
+    await apiService.updateReserva(id, reservaData)
+    alert("Reserva actualizada correctamente.")
+    document.getElementById("editReservaModal").remove()
+    location.reload()
   } catch (error) {
-    console.error("Error al cargar detalles de reserva:", error)
-    alert("No se pudieron obtener los detalles de la reserva.")
+    console.error("Error al actualizar reserva:", error)
+    alert(`Error al actualizar la reserva: ${error.message}`)
   }
 }
 
@@ -347,7 +412,7 @@ window.editarReserva = async (reservaId) => {
     const reserva = await apiService.getReservaById(reservaId)
 
     const modalHtml = `
-      <div class="modal-overlay" id="editReservaModal">
+      <div class="modal-overlay show" id="editReservaModal">
         <div class="modal">
           <div class="modal-header">
             <div class="modal-title">Editar Reserva #${reserva.id}</div>
@@ -357,21 +422,30 @@ window.editarReserva = async (reservaId) => {
             <form id="editReservaForm">
               <input type="hidden" name="id" value="${reserva.id}">
               <div class="form-group">
-                <label class="form-label">Fecha Inicio</label>
+                <label class="form-label">Fecha Inicio *</label>
                 <input type="date" class="form-control" name="fechaInicio" value="${reserva.fechaInicio}" required>
               </div>
               <div class="form-group">
-                <label class="form-label">Fecha Fin</label>
+                <label class="form-label">Fecha Fin *</label>
                 <input type="date" class="form-control" name="fechaFin" value="${reserva.fechaFin}" required>
               </div>
               <div class="form-group">
-                <label class="form-label">Estado</label>
+                <label class="form-label">Estado *</label>
                 <select class="form-control" name="estado" required>
-                  <option value="Pendiente" ${reserva.estado === "Pendiente" ? "selected" : ""}>Pendiente</option>
-                  <option value="En Alquiler" ${reserva.estado === "En Alquiler" ? "selected" : ""}>En Alquiler</option>
-                  <option value="Completado" ${reserva.estado === "Completado" ? "selected" : ""}>Completado</option>
-                  <option value="Cancelado" ${reserva.estado === "Cancelado" ? "selected" : ""}>Cancelado</option>
+                  <option value="PENDIENTE" ${reserva.estado === "PENDIENTE" ? "selected" : ""}>Pendiente</option>
+                  <option value="APROBADA" ${reserva.estado === "APROBADA" ? "selected" : ""}>Aprobada</option>
+                  <option value="RECHAZADA" ${reserva.estado === "RECHAZADA" ? "selected" : ""}>Rechazada</option>
+                  <option value="COMPLETADA" ${reserva.estado === "COMPLETADA" ? "selected" : ""}>Completada</option>
+                  <option value="CANCELADA" ${reserva.estado === "CANCELADA" ? "selected" : ""}>Cancelada</option>
                 </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Cliente</label>
+                <input type="text" class="form-control" value="${reserva.cliente?.nombre || "No disponible"}" readonly>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Herramienta</label>
+                <input type="text" class="form-control" value="${reserva.herramienta?.nombre || "No disponible"}" readonly>
               </div>
             </form>
           </div>
@@ -390,52 +464,29 @@ window.editarReserva = async (reservaId) => {
   }
 }
 
-window.actualizarReserva = async () => {
-  const form = document.getElementById("editReservaForm")
-  const formData = new FormData(form)
-
-  const reserva = {
-    id: Number.parseInt(formData.get("id")),
-    fechaInicio: formData.get("fechaInicio"),
-    fechaFin: formData.get("fechaFin"),
-    estado: formData.get("estado"),
-  }
-
+window.verDetallesReserva = async (reservaId) => {
   try {
-    await apiService.updateReserva(reserva.id, reserva)
-    alert("Reserva actualizada correctamente.")
-    document.getElementById("editReservaModal").remove()
-    location.reload()
-  } catch (error) {
-    console.error("Error al actualizar reserva:", error)
-    alert("Error al actualizar la reserva.")
-  }
-}
-
-// Funciones globales para herramientas
-window.verDetallesHerramienta = async (herramientaId) => {
-  try {
-    const herramienta = await apiService.getHerramientaById(herramientaId)
+    const reserva = await apiService.getReservaById(reservaId)
 
     const modalHtml = `
-      <div class="modal-overlay" id="herramientaDetallesModal">
+      <div class="modal-overlay show" id="reservaDetallesModal">
         <div class="modal">
           <div class="modal-header">
-            <div class="modal-title">${herramienta.nombre}</div>
-            <button class="modal-close" onclick="document.getElementById('herramientaDetallesModal').remove()">&times;</button>
+            <div class="modal-title">Detalles de la Reserva #${reserva.id}</div>
+            <button class="modal-close" onclick="document.getElementById('reservaDetallesModal').remove()">&times;</button>
           </div>
           <div class="modal-body">
-            <p><strong>Marca:</strong> ${herramienta.marca || "No especificada"}</p>
-            <p><strong>Modelo:</strong> ${herramienta.modelo || "No especificado"}</p>
-            <p><strong>Categoría:</strong> ${herramienta.categoria || "Sin categoría"}</p>
-            <p><strong>Precio por día:</strong> $${Number.parseFloat(herramienta.costoPorDia || 0).toFixed(2)}</p>
-            <p><strong>Cantidad disponible:</strong> ${herramienta.cantidadDisponible || 0}</p>
-            <p><strong>Descripción:</strong> ${herramienta.descripcion || "Sin descripción"}</p>
-            <p><strong>Estado:</strong> ${herramienta.activa ? "Activa" : "Inactiva"}</p>
+            <p><strong>Cliente:</strong> ${reserva.cliente?.nombre || "No disponible"}</p>
+            <p><strong>Herramienta:</strong> ${reserva.herramienta?.nombre || "No disponible"}</p>
+            <p><strong>Fecha inicio:</strong> ${reserva.fechaInicio}</p>
+            <p><strong>Fecha fin:</strong> ${reserva.fechaFin}</p>
+            <p><strong>Estado:</strong> ${reserva.estado}</p>
+            <p><strong>Costo Total:</strong> $${reserva.costoTotal?.toFixed(2) || "0.00"}</p>
+            <p><strong>Monto:</strong> $${reserva.monto?.toFixed(2) || "0.00"}</p>
           </div>
           <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="document.getElementById('herramientaDetallesModal').remove()">Cerrar</button>
-            <button class="btn btn-primary" onclick="editarHerramientaModal(${herramienta.id})">Editar</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('reservaDetallesModal').remove()">Cerrar</button>
+            <button class="btn btn-primary" onclick="abrirModalFactura(${reserva.id})">Generar Factura</button>
           </div>
         </div>
       </div>
@@ -443,8 +494,8 @@ window.verDetallesHerramienta = async (herramientaId) => {
 
     document.body.insertAdjacentHTML("beforeend", modalHtml)
   } catch (error) {
-    console.error("Error al cargar detalles de herramienta:", error)
-    alert("No se pudieron obtener los detalles de la herramienta.")
+    console.error("Error al cargar detalles de reserva:", error)
+    alert("No se pudieron obtener los detalles de la reserva.")
   }
 }
 
@@ -457,7 +508,7 @@ window.editarHerramientaModal = async (herramientaId) => {
     if (modalAnterior) modalAnterior.remove()
 
     const modalHtml = `
-      <div class="modal-overlay" id="editToolModal">
+      <div class="modal-overlay show" id="editToolModal">
         <div class="modal">
           <div class="modal-header">
             <div class="modal-title">Editar Herramienta</div>
@@ -533,28 +584,121 @@ window.editarHerramientaModal = async (herramientaId) => {
   }
 }
 
-window.alquilarHerramienta = async (herramientaId) => {
+window.verDetallesHerramienta = async (herramientaId) => {
   try {
-    const clienteId = 1 // Cambiar por cliente autenticado
-    const hoy = new Date().toISOString().split("T")[0]
-    const manana = new Date()
-    manana.setDate(manana.getDate() + 1)
-    const fechaFin = manana.toISOString().split("T")[0]
+    const herramienta = await apiService.getHerramientaById(herramientaId)
 
-    const reserva = {
-      herramientaId: herramientaId,
-      clienteId: clienteId,
-      fechaInicio: hoy,
-      fechaFin: fechaFin,
-      estado: "Pendiente",
-    }
+    const modalHtml = `
+      <div class="modal-overlay show" id="herramientaDetallesModal">
+        <div class="modal">
+          <div class="modal-header">
+            <div class="modal-title">${herramienta.nombre}</div>
+            <button class="modal-close" onclick="document.getElementById('herramientaDetallesModal').remove()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p><strong>Marca:</strong> ${herramienta.marca || "No especificada"}</p>
+            <p><strong>Modelo:</strong> ${herramienta.modelo || "No especificado"}</p>
+            <p><strong>Categoría:</strong> ${herramienta.categoria?.nombre || herramienta.categoria || "Sin categoría"}</p>
+            <p><strong>Precio por día:</strong> $${Number.parseFloat(herramienta.costoPorDia || 0).toFixed(2)}</p>
+            <p><strong>Cantidad disponible:</strong> ${herramienta.cantidadDisponible || 0}</p>
+            <p><strong>Descripción:</strong> ${herramienta.descripcion || "Sin descripción"}</p>
+            <p><strong>Estado:</strong> ${herramienta.activa ? "Activa" : "Inactiva"}</p>
+            <p><strong>Proveedor:</strong> ${herramienta.proveedor?.nombre || "No especificado"}</p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="document.getElementById('herramientaDetallesModal').remove()">Cerrar</button>
+            <button class="btn btn-primary" onclick="editarHerramientaModal(${herramienta.id})">Editar</button>
+          </div>
+        </div>
+      </div>
+    `
 
-    await apiService.createReserva(reserva)
-    alert("Reserva creada correctamente.")
+    document.body.insertAdjacentHTML("beforeend", modalHtml)
+  } catch (error) {
+    console.error("Error al cargar detalles de herramienta:", error)
+    alert("No se pudieron obtener los detalles de la herramienta.")
+  }
+}
+
+window.eliminarHerramienta = async (herramientaId) => {
+  if (!confirm("¿Estás seguro de que quieres eliminar esta herramienta? Esta acción no se puede deshacer.")) {
+    return
+  }
+
+  try {
+    await apiService.deleteHerramienta(herramientaId)
+    alert("Herramienta eliminada correctamente.")
     location.reload()
   } catch (error) {
-    console.error("Error al alquilar herramienta:", error)
-    alert("Error al crear la reserva.")
+    console.error("Error al eliminar herramienta:", error)
+    alert(`No se pudo eliminar la herramienta: ${error.message}`)
+  }
+}
+
+window.descargarFactura = async (facturaId) => {
+  try {
+    const factura = await apiService.getFacturaById(facturaId)
+    const csvContent = [
+      ["Campo", "Valor"],
+      ["ID Factura", factura.id],
+      ["Folio", factura.folio || "N/A"],
+      ["Subtotal", `$${Number.parseFloat(factura.subtotal || 0).toFixed(2)}`],
+      ["IVA", `$${Number.parseFloat(factura.iva || 0).toFixed(2)}`],
+      ["Total", `$${Number.parseFloat(factura.total || 0).toFixed(2)}`],
+      ["Fecha Emisión", factura.fechaEmision || "No especificada"],
+      ["RFC Emisor", factura.rfcEmisor || "N/A"],
+      ["RFC Receptor", factura.rfcReceptor || "N/A"],
+      ["ID Reserva", factura.reserva?.id || "No especificada"],
+    ]
+      .map((row) => row.join(","))
+      .join("\n")
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.setAttribute("download", `factura-${facturaId}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error("Error al descargar factura:", error)
+    alert(`Error al descargar la factura: ${error.message}`)
+  }
+}
+
+window.exportarFacturas = async () => {
+  try {
+    const facturas = await apiService.getFacturas()
+
+    const csv = [
+      ["ID", "Folio", "Subtotal", "IVA", "Total", "Fecha Emisión", "ID Reserva"],
+      ...facturas.map((f) => [
+        f.id || "",
+        f.folio || "",
+        f.subtotal ? `$${Number.parseFloat(f.subtotal).toFixed(2)}` : "$0.00",
+        f.iva ? `$${Number.parseFloat(f.iva).toFixed(2)}` : "$0.00",
+        f.total ? `$${Number.parseFloat(f.total).toFixed(2)}` : "$0.00",
+        f.fechaEmision || "",
+        f.reserva?.id || "",
+      ]),
+    ]
+      .map((row) => row.join(","))
+      .join("\n")
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+
+    const link = document.createElement("a")
+    link.href = url
+    link.setAttribute("download", "facturas.csv")
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  } catch (error) {
+    console.error("Error exportando facturas:", error)
+    alert("No se pudieron exportar las facturas.")
   }
 }
 
