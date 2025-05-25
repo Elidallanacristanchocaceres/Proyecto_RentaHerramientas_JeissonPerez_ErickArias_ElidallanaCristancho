@@ -1,19 +1,18 @@
-/**
- * Componente de Sidebar
- */
-
 export function createSidebar(currentRole) {
   return `
     <div class="sidebar">
       <div class="sidebar-header">
         <div class="user-role-display">
           <i class="fas fa-user-tag"></i>
-          <span>${currentRole === 'admin' ? 'Administrador' : 
-                currentRole === 'provider' ? 'Proveedor' : 'Cliente'}</span>
+          <span>${
+            currentRole === "admin" ? "Administrador" : currentRole === "provider" ? "Proveedor" : "Cliente"
+          }</span>
         </div>
       </div>
       
-      ${currentRole === 'admin' ? `
+      ${
+        currentRole === "admin"
+          ? `
         <ul class="nav-menu">
           <li class="nav-item active" data-view="admin-dashboard">
             <i class="fas fa-tachometer-alt"></i>
@@ -36,9 +35,13 @@ export function createSidebar(currentRole) {
             <span>Configuración</span>
           </li>
         </ul>
-      ` : ''}
+      `
+          : ""
+      }
       
-      ${currentRole === 'provider' ? `
+      ${
+        currentRole === "provider"
+          ? `
         <ul class="nav-menu">
           <li class="nav-item active" data-view="provider-dashboard">
             <i class="fas fa-tachometer-alt"></i>
@@ -61,9 +64,13 @@ export function createSidebar(currentRole) {
             <span>Configuración</span>
           </li>
         </ul>
-      ` : ''}
+      `
+          : ""
+      }
       
-      ${currentRole === 'client' ? `
+      ${
+        currentRole === "client"
+          ? `
         <ul class="nav-menu">
           <li class="nav-item active" data-view="client-dashboard">
             <i class="fas fa-tachometer-alt"></i>
@@ -86,7 +93,9 @@ export function createSidebar(currentRole) {
             <span>Configuración</span>
           </li>
         </ul>
-      ` : ''}
+      `
+          : ""
+      }
     </div>
-  `;
+  `
 }

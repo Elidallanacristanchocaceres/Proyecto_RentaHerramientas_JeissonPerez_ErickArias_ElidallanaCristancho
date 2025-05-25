@@ -1,7 +1,3 @@
-/**
- * Componente de Header
- */
-
 export function createHeader(userData) {
   return `
     <header>
@@ -15,12 +11,15 @@ export function createHeader(userData) {
           <span class="notification-badge">${userData.notifications || 0}</span>
         </div>
         <div class="user-avatar">
-          <span>${userData.initials || 'US'}</span>
+          <span>${userData.initials || "US"}</span>
         </div>
-        <span>${userData.name || 'Usuario'}</span>
+        <span>${userData.name || "Usuario"}</span>
+        <button class="btn btn-secondary" id="logoutBtn" style="margin-left: 1rem;">
+          <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+        </button>
       </div>
     </header>
-  `;
+  `
 }
 
 export function createNotificationsPanel() {
@@ -58,19 +57,10 @@ export function createNotificationsPanel() {
             <div class="notification-time">Hace 1 hora</div>
           </div>
         </div>
-        <div class="notification-item">
-          <div class="notification-icon">
-            <i class="fas fa-check-circle"></i>
-          </div>
-          <div class="notification-content">
-            <div class="notification-message">Alquiler completado: Sierra Circular</div>
-            <div class="notification-time">Ayer</div>
-          </div>
-        </div>
       </div>
       <div class="notifications-footer">
         <a href="#">Ver todas las notificaciones</a>
       </div>
     </div>
-  `;
+  `
 }
