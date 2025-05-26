@@ -182,5 +182,9 @@ Realiza tus cambios y haz commit.
 
 Envía un pull request.
 
+Repositorio backend:
+https://github.com/stivenpe/Renta_Heramientas_ElidallanaCristancho_ErickArias_JeissonPerez/tree/develop
+
+
 📄 Licencia
 Este proyecto está bajo la licencia MIT.
