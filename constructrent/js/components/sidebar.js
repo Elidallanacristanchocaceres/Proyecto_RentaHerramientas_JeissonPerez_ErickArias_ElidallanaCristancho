@@ -5,13 +5,13 @@ export function createSidebar(currentRole) {
         <div class="user-role-display">
           <i class="fas fa-user-tag"></i>
           <span>${
-            currentRole === "admin" ? "Administrador" : currentRole === "provider" ? "Proveedor" : "Cliente"
+            currentRole === "ADMIN" ? "Administrador" : currentRole === "PROVEEDOR" ? "Proveedor" : "Cliente"
           }</span>
         </div>
       </div>
       
       ${
-        currentRole === "admin"
+        currentRole === "ADMIN"
           ? `
         <ul class="nav-menu">
           <li class="nav-item active" data-view="admin-dashboard">
@@ -40,7 +40,7 @@ export function createSidebar(currentRole) {
       }
       
       ${
-        currentRole === "provider"
+        currentRole === "PROVEEDOR"
           ? `
         <ul class="nav-menu">
           <li class="nav-item active" data-view="provider-dashboard">
@@ -69,7 +69,7 @@ export function createSidebar(currentRole) {
       }
       
       ${
-        currentRole === "client"
+        currentRole === "CLIENTE"
           ? `
         <ul class="nav-menu">
           <li class="nav-item active" data-view="client-dashboard">

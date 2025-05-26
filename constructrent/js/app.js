@@ -40,7 +40,7 @@ function initApp() {
   const storedRole = localStorage.getItem("userRole")
 
   // Establecer rol actual
-  appState.currentRole = roleParam || storedRole || "client"
+  appState.currentRole = roleParam || storedRole || "CLIENTE"
   console.log("Rol actual:", appState.currentRole)
 
   // Renderizar la aplicación
@@ -71,11 +71,11 @@ async function renderApp() {
   let contentHTML = ""
 
   try {
-    if (appState.currentRole === "admin") {
+    if (appState.currentRole === "ADMIN") {
       contentHTML = await createAdminViews()
-    } else if (appState.currentRole === "provider") {
+    } else if (appState.currentRole === "PROVEEDOR") {
       contentHTML = await createProviderViews()
-    } else if (appState.currentRole === "client") {
+    } else if (appState.currentRole === "CLIENTE") {
       contentHTML = await createClientViews()
     } else {
       // Fallback por defecto

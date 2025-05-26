@@ -1,88 +1,255 @@
-const API_BASE_URL = "http://localhost:8080"
+const API_BASE_URL = "http://localhost:8080";
 
-async function fetchApi(endpoint, options = {}) {
-  try {
-    const token = localStorage.getItem("authToken")
+class ApiService {
+  constructor() {
+    this.baseURL = API_BASE_URL;
+  }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  getAuthToken() {
+    return localStorage.getItem("authToken") || localStorage.getItem("token");
+  }
+
+  async fetchApi(endpoint, options = {}) {
+    const url = `${this.baseURL}${endpoint}`;
+    const token = this.getAuthToken();
+
+    const config = {
       ...options,
+      credentials: 'include',
       headers: {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options.headers,
       },
-    })
+    };
 
-    if (!response.ok) {
-      const text = await response.text()
-      throw new Error(`HTTP error! status: ${response.status}, body: ${text}`)
+    try {
+      console.log(`Making ${config.method || "GET"} request to:`, url);
+      console.log("Headers:", config.headers);
+      if (config.body) {
+        console.log("Request body:", config.body);
+      }
+
+      const response = await fetch(url, config);
+
+      console.log(`Response status: ${response.status}`);
+      console.log("LocalStorage Role:", localStorage.getItem("userRole"));
+      // Solo lanza error 401 sin redirigir
+      if (response.status === 401) {
+        console.error("Token inválido o expirado");
+        throw new Error("Unauthorized");
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Respuesta vacía
+      if (response.status === 204) {
+        return null;
+      }
+
+      // Determinar si es JSON
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        return await response.json();
+      } else {
+        return await response.text();
+      }
+    } catch (error) {
+      console.error(`Error fetching ${endpoint}:`, error.message);
+      throw error;
+    }
+  }
+
+  // ============ AUTENTICACIÓN ============
+  async login(credentials) {
+    const data = await this.fetchApi("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(credentials),
+    });
+
+    if (data.token) {
+      localStorage.setItem("authToken", data.token);
+      localStorage.setItem("isAuthenticated", "true");
+
+      if (data.usuario) {
+        localStorage.setItem("userData", JSON.stringify(data.usuario));
+        localStorage.setItem("userRole", data.usuario.rol?.toLowerCase() || "CLIENTE");
+      }
     }
 
-    const contentType = response.headers.get("content-type")
-    if (!contentType || !contentType.includes("application/json")) {
-      const text = await response.text()
-      throw new Error("La respuesta no es JSON válido: " + text)
-    }
+    return data;
+  }
 
-    return await response.json()
-  } catch (error) {
-    console.error(`Error fetching ${endpoint}:`, error.message)
-    throw error
+  async register(userData) {
+    return await this.fetchApi("/auth/registro", {
+      method: "POST",
+      body: JSON.stringify(userData),
+    });
+  }
+
+  // ============ USUARIOS ============
+  async getUsuarios() {
+    return this.fetchApi("/api/usuarios");
+  }
+
+  async getUsuarioById(id) {
+    return this.fetchApi(`/api/usuarios/${id}`);
+  }
+
+  async createUsuario(usuario) {
+    return this.fetchApi("/api/usuarios", {
+      method: "POST",
+      body: JSON.stringify(usuario),
+    });
+  }
+
+  async updateUsuario(id, usuario) {
+    return this.fetchApi(`/api/usuarios/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(usuario),
+    });
+  }
+
+  async changeUserStatus(id, activo) {
+    return this.fetchApi(`/api/usuarios/${id}/estado`, {
+      method: "PATCH",
+      body: JSON.stringify(activo),
+    });
+  }
+
+  async deleteUsuario(id) {
+    return this.fetchApi(`/api/usuarios/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // ============ HERRAMIENTAS ============
+  async getHerramientas() {
+    return this.fetchApi("/api/herramientas");
+  }
+
+  async getHerramientaById(id) {
+    return this.fetchApi(`/api/herramientas/${id}`);
+  }
+
+  async createHerramienta(herramienta) {
+    return this.fetchApi("/api/herramientas", {
+      method: "POST",
+      body: JSON.stringify(herramienta),
+    });
+  }
+
+  async updateHerramienta(id, herramienta) {
+    return this.fetchApi(`/api/herramientas/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(herramienta),
+    });
+  }
+
+  async deleteHerramienta(id) {
+    return this.fetchApi(`/api/herramientas/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // ============ RESERVAS ============
+  async getReservas() {
+    return this.fetchApi("/api/reservas");
+  }
+
+  async getReservaById(id) {
+    return this.fetchApi(`/api/reservas/${id}`);
+  }
+
+  async createReserva(reserva) {
+    return this.fetchApi("/api/reservas", {
+      method: "POST",
+      body: JSON.stringify(reserva),
+    });
+  }
+
+  async updateReserva(id, reservaData) {
+    return this.fetchApi(`/api/reservas/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(reservaData),
+    });
+  }
+
+  async deleteReserva(id) {
+    return this.fetchApi(`/api/reservas/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // ============ FACTURAS ============
+  async getFacturas() {
+    return this.fetchApi("/api/facturas");
+  }
+
+  async getFacturaById(id) {
+    return this.fetchApi(`/api/facturas/${id}`);
+  }
+
+  async createFactura(factura) {
+    return this.fetchApi("/api/facturas", {
+      method: "POST",
+      body: JSON.stringify(factura),
+    });
+  }
+
+  async generateFactura(facturaData) {
+    return this.fetchApi("/api/facturas/generate", {
+      method: "POST",
+      body: JSON.stringify(facturaData),
+    });
+  }
+
+  // ============ CATEGORIAS ============
+  async getCategorias() {
+    return this.fetchApi("/api/categorias");
+  }
+
+  async getCategoriaById(id) {
+    return this.fetchApi(`/api/categorias/${id}`);
+  }
+
+  // ============ PROVEEDORES ============
+  async getProveedores() {
+    return this.fetchApi("/api/proveedores");
+  }
+
+  async getProveedorById(id) {
+    return this.fetchApi(`/api/proveedores/${id}`);
+  }
+
+  // ============ NOTIFICACIONES ============
+  async getNotificaciones() {
+    return this.fetchApi("/api/notificaciones/todas");
+  }
+
+  async getNotificacionById(id) {
+    return this.fetchApi(`/api/notificaciones/${id}`);
+  }
+
+  // ============ PAGOS ============
+  async getPagos() {
+    return this.fetchApi("/api/pagos");
+  }
+
+  async getPagoById(id) {
+    return this.fetchApi(`/api/pagos/${id}`);
+  }
+
+  async createPago(pago) {
+    return this.fetchApi("/api/pagos", {
+      method: "POST",
+      body: JSON.stringify(pago),
+    });
   }
 }
 
-export const apiService = {
-  // Autenticación
-  login: (data) => fetchApi("/auth/login", { method: "POST", body: JSON.stringify(data) }),
-  register: (data) => fetchApi("/auth/registro", { method: "POST", body: JSON.stringify(data) }),
-
-  // Categorías
-  getCategorias: () => fetchApi("/api/categorias"),
-  createCategoria: (data) => fetchApi("/api/categorias", { method: "POST", body: JSON.stringify(data) }),
-  updateCategoria: (id, data) => fetchApi(`/api/categorias/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-  deleteCategoria: (id) => fetchApi(`/api/categorias/${id}`, { method: "DELETE" }),
-
-  // Facturas
-  getFacturas: () => fetchApi("/api/facturas"),
-  getFacturaById: (id) => fetchApi(`/api/facturas/${id}`),
-  generateFactura: (data) => fetchApi("/api/facturas/generate", { method: "POST", body: JSON.stringify(data) }),
-  createFactura: (data) => fetchApi("/api/facturas", { method: "POST", body: JSON.stringify(data) }),
-
-  // Herramientas
-  getHerramientas: () => fetchApi("/api/herramientas"),
-  getHerramientaById: (id) => fetchApi(`/api/herramientas/${id}`),
-  createHerramienta: (data) => fetchApi("/api/herramientas", { method: "POST", body: JSON.stringify(data) }),
-  updateHerramienta: (id, data) => fetchApi(`/api/herramientas/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-  deleteHerramienta: (id) => fetchApi(`/api/herramientas/${id}`, { method: "DELETE" }),
-
-  // Notificaciones
-  getNotificaciones: () => fetchApi("/api/notificaciones"),
-  markAsRead: (id) => fetchApi(`/api/notificaciones/${id}/read`, { method: "PUT" }),
-
-  // Pagos
-  getPagos: () => fetchApi("/api/pagos"),
-  processPago: (data) => fetchApi("/api/pagos", { method: "POST", body: JSON.stringify(data) }),
-
-  // Proveedores
-  getProveedores: () => fetchApi("/api/proveedores"),
-  getProveedorById: (id) => fetchApi(`/api/proveedores/${id}`),
-  createProveedor: (data) => fetchApi("/api/proveedores", { method: "POST", body: JSON.stringify(data) }),
-  updateProveedor: (id, data) => fetchApi(`/api/proveedores/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-  deleteProveedor: (id) => fetchApi(`/api/proveedores/${id}`, { method: "DELETE" }),
-
-  // Reservas
-  getReservas: () => fetchApi("/api/reservas"),
-  getReservaById: (id) => fetchApi(`/api/reservas/${id}`),
-  createReserva: (data) => fetchApi("/api/reservas", { method: "POST", body: JSON.stringify(data) }),
-  updateReserva: (id, data) => fetchApi(`/api/reservas/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-  cancelReserva: (id) => fetchApi(`/api/reservas/${id}/cancel`, { method: "PUT" }),
-
-  // Usuarios
-  getUsuarios: () => fetchApi("/api/usuarios"),
-  getUsuarioById: (id) => fetchApi(`/api/usuarios/${id}`),
-  createUsuario: (data) => fetchApi("/api/usuarios", { method: "POST", body: JSON.stringify(data) }),
-  updateUsuario: (id, data) => fetchApi(`/api/usuarios/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-  deleteUsuario: (id) => fetchApi(`/api/usuarios/${id}`, { method: "DELETE" }),
-  changeUserStatus: (id, active) =>
-    fetchApi(`/api/usuarios/${id}/status`, { method: "PUT", body: JSON.stringify({ active }) }),
-}
+export const apiService = new ApiService();

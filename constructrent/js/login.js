@@ -153,13 +153,13 @@ function showError(message) {
 
 function redirectUser(role) {
   switch (role) {
-    case 'admin':
+    case 'ADMIN':
       window.location.href = 'dashboard.html';
       break;
-    case 'provider':
+    case 'PROVEEDOR':
       window.location.href = 'dashboard.html';
       break;
-    case 'client':
+    case 'CLIENTE':
       window.location.href = 'dashboard.html';
       break;
     default:
