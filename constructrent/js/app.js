@@ -703,4 +703,13 @@ window.exportarFacturas = async () => {
 }
 
 // Inicializar la aplicación cuando el DOM esté cargado
-document.addEventListener("DOMContentLoaded", initApp)
+document.addEventListener("DOMContentLoaded", () => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    window.location.href = 'login.html';
+    return;
+  }
+  
+  // Inicializar la aplicación solo si está autenticado
+  initApp();
+});
