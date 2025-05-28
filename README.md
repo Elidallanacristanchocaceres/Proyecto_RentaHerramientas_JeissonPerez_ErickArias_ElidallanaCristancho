@@ -1,190 +1,165 @@
-🧩 ConstructRent
+# Frontend ConstructRent🛠️
 
-Es una plataforma completa para el alquiler de herramientas y equipos de construcción. El sistema permite a los proveedores registrar sus herramientas, mientras que los clientes pueden buscar, reservar y alquilar estos equipos. La aplicación gestiona todo el ciclo de vida del alquiler, desde la reserva inicial hasta la devolución, incluyendo pagos, facturación y notificaciones.
+### ✔️Descripción del Proyecto
 
-Características principales:
+ConstructRent es una plataforma web para el alquiler de herramientas de construcción que permite a los usuarios (clientes, proveedores y administradores) gestionar herramientas, reservas, facturas y usuarios a través de un sistema de roles.
 
-- Gestión de inventario de herramientas
-- Sistema de reservas y alquileres
-- Procesamiento de pagos con Stripe
-- Facturación electrónica
-- Notificaciones por email
-- Gestión de daños y depósitos
-- Reportes y estadísticas
-- Panel de administración
+### ✔️Características Principales
+Autenticación de usuarios con roles (Admin, Proveedor, Cliente)
 
+Dashboard interactivo con estadísticas y resúmenes
 
+Gestión de herramientas (CRUD completo)
 
-📌 Índice
-📜 Descripción
+Sistema de reservas con seguimiento de estado
 
-🚀 Tecnologías Utilizadas
+Facturación integrada
 
-⚙️ Arquitectura del Proyecto
+Diseño responsive para diferentes dispositivos
 
-🛠️ Instalación y Ejecución
+Modales dinámicos para formularios
 
-📦 Estructura del Proyecto
+Tablas interactivas con búsqueda y filtrado
 
-🧪 Pruebas
-
-🙋‍♂️ Contribuciones
-
-📄 Licencia
-
-📜 Descripción
-Este proyecto es una aplicación web desarrollada con una arquitectura cliente-servidor. El frontend está construido con HTML, CSS y JavaScript puro, mientras que el backend utiliza Spring Boot para exponer servicios RESTful y manejar la lógica del negocio.
-
-El objetivo principal de la aplicación es:
-➡️ [Aquí coloca el objetivo, como por ejemplo: gestionar citas médicas, administrar inventario de una finca, o mostrar productos deportivos, etc.]
-
-🚀 Tecnologías Utilizadas
-Frontend:
-HTML5
-
-CSS3
-
-JavaScript (ES6)
-
-Backend:
-🔹 Spring Boot (Última versión)
-
- 🔹 Java |7 o superior
-
- 🔹 Spring Security con JWT
-
- 🔹 Spring Data JPA
-
- 🔹 PostgreSQL
-
-
-Herramientas:
-Maven / Gradle
-
-Git
-
-IDE:  VSCode
-
-Postman (para pruebas de API)
-
-⚙️ Arquitectura del Proyecto
-scss
-Copiar
-Editar
-Cliente (HTML/CSS/JS) ⇄ REST API (Spring Boot) ⇄ Base de Datos (MySQL)
-El cliente realiza peticiones a la API usando fetch o axios.
-
-Spring Boot expone endpoints que reciben, procesan y responden con datos en formato JSON.
-
-La base de datos almacena los registros necesarios y es gestionada mediante JPA/Hibernate.
-
-🛠️ Instalación y Ejecución
-1. Clonar el repositorio
-bash
-Copiar
-Editar
-git clone https://github.com/Elidallanacristanchocaceres/Proyecto_RentaHerramientas_JeissonPerez_ErickArias_ElidallanaCristancho
-cd https://github.com/Elidallanacristanchocaceres/Proyecto_RentaHerramientas_JeissonPerez_ErickArias_ElidallanaCristancho
-2. Configurar la base de datos
-Asegúrate de tener MySQL instalado y configura el archivo application.properties:
-
-properties
-Copiar
-Editar
-spring.datasource.url=jdbc:mysql://localhost:3306/tu_base
-spring.datasource.username=tu_usuario
-spring.datasource.password=tu_password
-spring.jpa.hibernate.ddl-auto=update
-3. Ejecutar el backend
-bash
-Copiar
-Editar
-./mvnw spring-boot:run
-4. Abrir el frontend
-Puedes abrir el archivo index.html directamente en tu navegador o servirlo con un servidor local como Live Server.
-
-##📦 Estructura del Proyecto
-### 📁 frontend/
+### ✔️Estructura de Archivos
 ````bash
-   ├── index.html
-   ├── styles/
-   │   └── main.css
-   └── scripts/
-       └── app.js
+constructrent/
+├── css/
+│   └── style.css           # Estilos principales
+├── js/
+│   ├── components/
+│   │   ├── cards.js        # Componentes de tarjetas
+│   │   ├── header.js       # Componente de cabecera
+│   │   ├── modals.js       # Componentes de modales
+│   │   ├── sidebar.js      # Componente de barra lateral
+│   │   └── tables.js       # Componentes de tablas
+│   ├── roles/
+│   │   ├── admin.js        # Vistas para administrador
+│   │   ├── client.js       # Vistas para cliente
+│   │   └── provider.js     # Vistas para proveedor
+│   ├── services/
+│   │   └── apiService.js   # Servicio para llamadas API
+│   ├── utils/
+│   │   └── utils.js        # Funciones utilitarias
+│   └── app.js              # Aplicación principal
+├── assets/
+│   └── favicon.png         # Icono de la aplicación
+├── index.html              # Página principal
+├── login.html              # Página de inicio de sesión
+└── dashboard.html          # Dashboard principal
 ````
-### 📁 backend/
+### ✔️Tecnologías Utilizadas
+- HTML5 - Estructura de la aplicación
+
+- CSS3 - Estilos y diseño responsive
+
+- JavaScript (ES6+) - Lógica de la aplicación
+
+- Fetch API - Comunicación con el backend
+
+- Font Awesome - Iconos
+
+- CSS Variables - Para temas y colores
+
+- Flexbox/Grid - Diseño de layouts
+
+### ✔️Configuración del Entorno
+Clonar el repositorio
+
+Asegurarse de que el backend esté corriendo en http://localhost:8080
+
+Abrir el archivo index.html en un navegador moderno
+
+### ✔️Guía de Desarrollo
+Estructura de Componentes
+El frontend está organizado en componentes reutilizables:
+
+- Header: Barra superior con logo, notificaciones y perfil de usuario
+
+- Sidebar: Navegación lateral con menú según rol de usuario
+
+- Cards: Componentes para mostrar estadísticas y herramientas
+
+- Tables: Tablas interactivas con paginación y búsqueda
+
+- Modals: Ventanas emergentes para formularios y detalles
+
+### ✔️Estilos CSS
+Los estilos utilizan variables CSS para colores y sombras:
+
+css
 ````bash
- com.herramienta.herramienta_app/
-│
-├── HerramientaAppApplication.java (Main application class)
-│
-├── application/
-│   └── services/
-│       ├── HerramientaService.java
-│       ├── NotificacionService.java
-│       ├── PagoService.java
-│       ├── ReporteService.java
-│       └── ReservaService.java
-│
-├── domain/
-│   ├── dtos/
-│   │   ├── HerramientaDto.java
-│   │   ├── ReservaDto.java
-│   │   └── ReservaResponseDto.java
-│   │
-│   └── entities/
-│       ├── Categoria.java
-│       ├── Cliente.java
-│       ├── Damage.java
-│       ├── Factura.java
-│       ├── Herramienta.java
-│       ├── Notificacion.java
-│       ├── Pago.java
-│       ├── Proveedor.java
-│       ├── Reserva.java
-│       └── Usuario.java
-│
-└── infrastructure/
-    ├── controllers/
-    │   ├── FacturaController.java
-    │   ├── HerramientaController.java
-    │   ├── NotificacionController.java
-    │   ├── PagoController.java
-    │   ├── ReporteController.java
-    │   └── ReservaController.java
-    │
-    └── repositories/
-        ├── CategoriaRepository.java
-        ├── ClienteRepository.java
-        ├── DamageRepository.java
-        ├── EmailSender.java
-        ├── FacturaRepository.java
-        ├── HerramientaRepository.java
-        ├── NotificacionRepository.java
-        ├── PagoRepository.java
-        ├── ProveedorRepository.java
-        ├── ReservaRepository.java
-        └── UsuarioRepository.java
-```` 
-🧪 Pruebas
-Las pruebas de backend se realizan con JUnit y Postman.
+:root {
+  --primary: #ffffff;
+  --secondary: #2e4057;
+  --accent: #f7c59f;
+  --light: #efefef;
+  --dark: #1d1d1d;
+  --success: #4caf50;
+  --warning: #ff9800;
+  --danger: #f44336;
+  --gray: #757575;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+````
+API Service
+El servicio apiService.js maneja todas las llamadas al backend con métodos como:
 
-Las pruebas del frontend son manuales o puedes integrar alguna librería como Cypress para tests E2E.
+javascript
+````bash
+async login(credentials) {
+  return this.fetchApi("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(credentials)
+  });
+}
 
-🙋‍♂️ Contribuciones
-¿Te gustaría contribuir? ¡Bienvenido! Por favor sigue estos pasos:
+async getHerramientas() {
+  return this.fetchApi("/api/herramientas");
+}
 
-Haz un fork del repositorio.
+async createReserva(reserva) {
+  return this.fetchApi("/api/reservas", {
+    method: "POST",
+    body: JSON.stringify(reserva)
+  });
+}
+````
+Vistas por Rol
+### Administrador
+- Dashboard con estadísticas globales
 
-Crea una rama nueva: git checkout -b mi-nueva-funcionalidad.
+- Gestión de usuarios
 
-Realiza tus cambios y haz commit.
+- Historial de alquileres
 
-Envía un pull request.
+- Reportes y análisis
 
-Repositorio backend:
-https://github.com/stivenpe/Renta_Heramientas_ElidallanaCristancho_ErickArias_JeissonPerez/tree/develop
+- Configuración del sistema
 
+### Proveedor
+- Dashboard con herramientas y reservas
 
-📄 Licencia
-Este proyecto está bajo la licencia MIT.
+- Gestión de herramientas propias
+
+- Facturación
+
+- Configuración de perfil
+
+### Cliente
+- Exploración de herramientas
+
+- Mis alquileres
+
+- Historial de pagos
+
+- Configuración de cuenta
+
+### ✔️Consideraciones
+El frontend espera un backend RESTful en http://localhost:8080
+
+- Se utiliza localStorage para manejar la autenticación
+
+- Los roles disponibles son: ADMIN, PROVEEDOR, CLIENTE
+
+- El diseño es completamente responsive
